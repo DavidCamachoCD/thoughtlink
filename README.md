@@ -1,2 +1,182 @@
-# hackaton
-This repo was created to make hand-on 3rd Hackaton's challenges. I'll write a best description when Nat an I discuss the problem that we will to solve
+# ThoughtLink: From Brain to Robot
+
+Decode non-invasive brain signals (EEG + TD-NIRS) into high-level commands for humanoid robot control via MuJoCo simulation.
+
+Built for **Global AI Hackathon** (Hack-Nation x Kernel x Dimensional), Feb 7-8, 2026 — Challenge #9.
+
+## System Architecture
+
+```
+[Brain Signals .npz]
+        |
+        v
+[Preprocessing]
+  EEG: bandpass 1-40Hz, CAR, 1s windows
+  NIRS: baseline correction, PCA
+        |
+        v
+[Feature Extraction]
+  Band Power (mu/beta) + Hjorth + NIRS fusion
+        |
+        v
+[Hierarchical Classifier]
+  Stage 1: Rest vs Active (binary gate)
+  Stage 2: Right Fist | Left Fist | Both Fists | Tongue (4-class)
+        |
+        v
+[Stability Layer]
+  Confidence threshold + Hysteresis + Debouncing + Majority voting
+        |
+        v
+[Intent -> Action Mapper]
+  Right Fist  -> RIGHT
+  Left Fist   -> LEFT
+  Both Fists  -> FORWARD
+  Tongue      -> STOP
+  Relax       -> STOP
+        |
+        v
+[Robot Controller -> MuJoCo Simulation]
+```
+
+## Dataset
+
+| Property | Value |
+|----------|-------|
+| Source | [KernelCo/robot_control](https://huggingface.co/datasets/KernelCo/robot_control) |
+| Format | `.npz`, 15-second chunks |
+| Samples | ~900 files |
+| EEG | 6 channels (AFF6, AFp2, AFp1, AFF5, FCz, CPz), 500 Hz |
+| TD-NIRS | 40 modules, 4.76 Hz, 5D tensor `(72, 40, 3, 2, 3)` |
+| Classes | Right Fist, Left Fist, Both Fists, Tongue Tapping, Relax |
+| Timing | Rest 0-3s, stimulus onset at 3s (~9s duration) |
+
+## Project Structure
+
+```
+thoughtlink/
+├── pyproject.toml              # UV package manager
+├── compose.yaml                # Docker Compose V2 (GPU)
+├── Dockerfile                  # CUDA 12.4 + Python 3.12 + MuJoCo
+├── configs/default.yaml        # Centralized hyperparameters
+├── src/thoughtlink/
+│   ├── data/                   # HuggingFace loader + subject-aware splitting
+│   ├── preprocessing/          # EEG (MNE), NIRS, sliding windows
+│   ├── features/               # Band power, Hjorth, NIRS features, fusion
+│   ├── models/                 # Baselines (sklearn), Hierarchical, EEGNet (PyTorch)
+│   ├── inference/              # Real-time decoder, confidence filter, smoother
+│   ├── bridge/                 # Intent-to-action mapping
+│   └── viz/                    # Dashboard & embeddings (planned)
+├── scripts/                    # Training & benchmarking scripts
+├── tests/                      # Unit tests (30 passing)
+└── notebooks/                  # EDA & model comparison (planned)
+```
+
+## Progress
+
+### v0.1.0 - v0.3.0: Core pipeline (done)
+
+- [x] Project scaffolding with UV, pyproject.toml, configs
+- [x] Data pipeline: HuggingFace download, `.npz` parsing, subject-aware split
+- [x] EEG preprocessing: bandpass 1-40 Hz, CAR via MNE-Python
+- [x] NIRS preprocessing: baseline correction, SDS selection, PCA
+- [x] Windowing: 1s sliding windows with 50% overlap (~15x augmentation)
+- [x] Feature extraction: band power (4 bands x 6 ch), Hjorth params, NIRS temporal
+- [x] Feature fusion: EEG + NIRS concatenation (~62 features/window)
+- [x] Baseline models: LogReg, SVM Linear, SVM RBF, Random Forest
+- [x] Hierarchical classifier: 2-stage rest-gate + 4-class decoder
+- [x] EEGNet CNN: compact PyTorch (~2-4K params, <3ms inference target)
+- [x] Stability pipeline: confidence threshold + hysteresis + debouncing + majority voting
+- [x] Real-time decoder: rolling buffer with windowed prediction
+- [x] Intent-to-action mapping: 5 classes -> robot Action enum
+- [x] Training scripts: baseline + hierarchical with metrics export
+- [x] Latency benchmark script: per-component timing (target <50ms)
+- [x] Unit tests: 30/30 passing (preprocessing, features, inference)
+- [x] Docker: CUDA 12.4 + Compose V2 with GPU support
+- [x] Security: .gitignore hardened, .env.example, .dockerignore
+
+### v0.4.0: Integration (next)
+
+- [ ] MuJoCo brain_policy.py (signal -> robot loop)
+- [ ] End-to-end demo script (run_demo.py)
+- [ ] Multi-robot orchestrator
+- [ ] ONNX model export
+
+### v1.0.0: Demo & polish (final)
+
+- [ ] Streamlit real-time dashboard
+- [ ] t-SNE/UMAP embedding visualization
+- [ ] Model comparison notebook
+- [ ] Latency vs accuracy tradeoff plots
+- [ ] README with final results
+
+## Setup
+
+### Local (macOS / Linux)
+
+```bash
+# Install uv
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Clone and install
+git clone https://github.com/DavidCamachoCD/hackaton.git
+cd hackaton
+uv sync
+
+# Run tests
+uv run pytest tests/ -v
+```
+
+### Docker (Ubuntu AMD64 + NVIDIA GPU)
+
+Requires [NVIDIA Container Toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/).
+
+```bash
+# Build
+docker compose build
+
+# Jupyter notebooks (http://localhost:8888)
+docker compose up jupyter
+
+# Train models
+docker compose run --rm train-baseline
+docker compose run --rm train-hierarchical
+
+# Benchmark latency
+docker compose run --rm benchmark
+
+# Tests
+docker compose run --rm test
+
+# Interactive shell
+docker compose run --rm shell
+```
+
+## Usage
+
+```bash
+# Train baseline models (LogReg, SVM, RF)
+uv run python scripts/train_baseline.py
+
+# Train hierarchical 2-stage model
+uv run python scripts/train_hierarchical.py
+
+# Benchmark inference latency
+uv run python scripts/benchmark_latency.py
+
+# Run unit tests
+uv run pytest tests/ -v
+```
+
+## Team
+
+- **David** -- Generative AI, RAG -- Infrastructure, pipeline, integration
+- **Nat** -- Data Science, ML, CV -- Signal processing, models, metrics
+
+## References
+
+- [KernelCo/robot_control dataset](https://huggingface.co/datasets/KernelCo/robot_control)
+- [brain-robot-interface repo](https://github.com/Nabla7/brain-robot-interface)
+- [MNE-Python CSP Motor Imagery](https://mne.tools/stable/auto_examples/decoding/decoding_csp_eeg.html)
+- [EEG BCI real-time robotic hand control (Nature 2025)](https://www.nature.com/articles/s41467-025-61064-x)
+- [BCI with AI copilots (Nature Machine Intelligence)](https://www.nature.com/articles/s42256-025-01090-y)

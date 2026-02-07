@@ -1,0 +1,64 @@
+# ThoughtLink - Default Configuration
+
+data:
+  dataset_id: "KernelCo/robot_control"
+  cache_dir: "./data/raw"
+  test_size: 0.2  # fraction of subjects for test
+
+preprocessing:
+  eeg:
+    sfreq: 500.0
+    channels: ["AFF6", "AFp2", "AFp1", "AFF5", "FCz", "CPz"]
+    bandpass_low: 1.0
+    bandpass_high: 40.0
+    reference: "average"  # CAR
+  nirs:
+    sfreq: 4.76
+    n_modules: 40
+    sds_indices: [1, 2]  # medium + long
+    n_pca_components: 20
+  stimulus_onset_s: 3.0
+  window_duration_s: 1.0
+  window_stride_s: 0.5
+  max_stimulus_s: 8.0
+
+features:
+  bands:
+    theta: [4, 8]
+    mu: [8, 13]
+    beta: [13, 30]
+    low_gamma: [30, 40]
+  csp_n_components: 4
+  hjorth: true
+
+models:
+  hierarchical:
+    stage1_threshold: 0.5  # Relax vs Active
+    stage2_model: "svm_rbf"
+  baseline:
+    logreg_C: 1.0
+    svm_C: 10.0
+    svm_kernel: "rbf"
+    rf_n_estimators: 200
+    rf_max_depth: 10
+
+inference:
+  confidence_threshold: 0.6
+  hysteresis_margin: 0.1
+  debounce_count: 3
+  smoother_window: 5
+  prediction_hz: 2.0
+
+bridge:
+  intent_to_action:
+    Right Fist: "RIGHT"
+    Left Fist: "LEFT"
+    Both Fists: "FORWARD"
+    Tongue Tapping: "STOP"
+    Relax: "STOP"
+  controller:
+    backend: "sim"
+    hold_s: 0.3
+    forward_speed: 0.6
+    yaw_rate: 0.8
+    smooth_alpha: 0.3

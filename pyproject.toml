@@ -1,0 +1,40 @@
+[project]
+name = "thoughtlink"
+version = "0.1.0"
+description = "ThoughtLink: Brain-to-Robot intent decoding using non-invasive EEG/NIRS signals"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+    "numpy>=2.0",
+    "scipy>=1.12",
+    "scikit-learn>=1.4",
+    "mne>=1.6",
+    "torch>=2.2",
+    "onnx>=1.15",
+    "onnxruntime>=1.17",
+    "matplotlib>=3.8",
+    "seaborn>=0.13",
+    "streamlit>=1.30",
+    "huggingface-hub>=0.20",
+    "datasets>=2.16",
+    "pyyaml>=6.0",
+    "pytest>=8.0",
+    "pandas>=2.1",
+    "jupyter>=1.0",
+    "ipykernel>=6.0",
+]
+
+[project.optional-dependencies]
+sim = [
+    "mujoco>=3.1",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/thoughtlink"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

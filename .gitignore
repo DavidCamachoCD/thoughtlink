@@ -1,40 +1,62 @@
-# Prerequisites
-*.d
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
 
-# Object files
-*.o
-*.ko
-*.obj
-*.elf
+# Virtual environments
+.venv/
+venv/
+env/
 
-# Linker output
-*.ilk
-*.map
-*.exp
+# Environment variables / secrets
+.env
+.env.*
+!.env.example
+*.secret
+*.key
+*.pem
+*.credentials
 
-# Precompiled Headers
-*.gch
-*.pch
+# HuggingFace cache & tokens
+.cache/
+huggingface_token*
+hf_token*
 
-# Libraries
-*.lib
-*.a
-*.la
-*.lo
+# UV
+.python-version
 
-# Shared objects (inc. Windows DLLs)
-*.dll
-*.so
-*.so.*
-*.dylib
+# Data (large files, downloaded at runtime)
+data/raw/
+data/processed/
+*.npz
 
-# Executables
-*.exe
-*.out
-*.app
-*.i*86
-*.x86_64
-*.hex
+# Trained models & results (large, reproducible)
+results/
+*.onnx
+*.pt
+*.pth
+*.pkl
+models/saved/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_metadata
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
 
 # Debug files
 *.dSYM/
@@ -42,14 +64,27 @@
 *.idb
 *.pdb
 
-# Kernel Module Compile Results
-*.mod*
-*.cmd
-.tmp_versions/
-modules.order
-Module.symvers
-Mkfile.old
-dkms.conf
+# C/C++ (legacy)
+*.o
+*.obj
+*.elf
+*.dll
+*.so
+*.dylib
+*.exe
+*.out
+*.app
 
-# debug information files
-*.dwo
+# Claude config
+.claude/
+
+# Docker
+.docker/
+
+# Logs
+*.log
+logs/
+
+# Misc
+*.bak
+*.tmp
