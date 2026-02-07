@@ -65,8 +65,8 @@ thoughtlink/
 │   ├── features/               # Band power, Hjorth, NIRS features, fusion
 │   ├── models/                 # Baselines (sklearn), Hierarchical, EEGNet (PyTorch)
 │   ├── inference/              # Real-time decoder, confidence filter, smoother
-│   ├── bridge/                 # Intent-to-action mapping
-│   └── viz/                    # Dashboard & embeddings (planned)
+│   ├── bridge/                 # Intent-to-action mapping + BrainPolicy loop
+│   └── viz/                    # Streamlit dashboard + temporal stability plots
 ├── scripts/                    # Training & benchmarking scripts
 ├── tests/                      # Unit tests (30 passing)
 └── notebooks/                  # EDA & model comparison (planned)
@@ -95,20 +95,20 @@ thoughtlink/
 - [x] Docker: CUDA 12.4 + Compose V2 with GPU support
 - [x] Security: .gitignore hardened, .env.example, .dockerignore
 
-### v0.4.0: Integration (next)
+### v0.4.0: Integration (done)
 
-- [ ] MuJoCo brain_policy.py (signal -> robot loop)
-- [ ] End-to-end demo script (run_demo.py)
-- [ ] Multi-robot orchestrator
-- [ ] ONNX model export
+- [x] BrainPolicy: main loop from brain signals to robot actions (`bridge/brain_policy.py`)
+- [x] End-to-end demo script (`scripts/run_demo.py`) with live terminal output
+- [x] Streamlit real-time dashboard (`viz/dashboard.py`)
+- [x] Temporal stability visualization (`viz/temporal_stability.py`)
+- [ ] Multi-robot orchestrator (stretch goal)
+- [ ] ONNX model export (stretch goal)
 
-### v1.0.0: Demo & polish (final)
+### v1.0.0: Demo & polish (next)
 
-- [ ] Streamlit real-time dashboard
 - [ ] t-SNE/UMAP embedding visualization
 - [ ] Model comparison notebook
 - [ ] Latency vs accuracy tradeoff plots
-- [ ] README with final results
 
 ## Setup
 
@@ -119,8 +119,8 @@ thoughtlink/
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Clone and install
-git clone https://github.com/DavidCamachoCD/hackaton.git
-cd hackaton
+git clone https://github.com/DavidCamachoCD/thoughtlink.git
+cd thoughtlink
 uv sync
 
 # Run tests
@@ -161,11 +161,18 @@ uv run python scripts/train_baseline.py
 # Train hierarchical 2-stage model
 uv run python scripts/train_hierarchical.py
 
+# Run end-to-end demo (replays .npz files through full pipeline)
+uv run python scripts/run_demo.py
+uv run python scripts/run_demo.py --live --delay 0.1   # real-time terminal output
+
+# Launch Streamlit dashboard
+uv run streamlit run src/thoughtlink/viz/dashboard.py
+
 # Benchmark inference latency
 uv run python scripts/benchmark_latency.py
 
 # Run unit tests
-uv run pytest tests/ -v
+uv run python -m pytest tests/ -v
 ```
 
 ## References
