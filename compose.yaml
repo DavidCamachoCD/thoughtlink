@@ -1,0 +1,94 @@
+# ThoughtLink - Compose Specification (Docker Compose V2)
+# https://docs.docker.com/compose/compose-file/
+#
+# Prerequisitos:
+#   - Docker Engine 24+
+#   - NVIDIA Container Toolkit: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/
+#
+# Uso:
+#   docker compose up jupyter          # Notebooks en http://localhost:8888
+#   docker compose up streamlit        # Dashboard en http://localhost:8501
+#   docker compose run --rm train-baseline
+#   docker compose run --rm train-hierarchical
+#   docker compose run --rm benchmark
+#   docker compose run --rm test
+#   docker compose run --rm shell
+
+x-gpu: &gpu
+  deploy:
+    resources:
+      reservations:
+        devices:
+          - driver: nvidia
+            count: 1
+            capabilities: [gpu]
+
+x-volumes: &volumes
+  volumes:
+    - ./data:/app/data
+    - ./results:/app/results
+    - ./notebooks:/app/notebooks
+    - ./src:/app/src
+    - ./scripts:/app/scripts
+    - ./configs:/app/configs
+
+x-env: &env
+  environment:
+    - NVIDIA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES:-all}
+    - CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-0}
+    - MUJOCO_GL=egl
+    - HF_TOKEN=${HF_TOKEN:-}
+
+services:
+  jupyter:
+    build:
+      context: .
+      target: jupyter
+    <<: [*gpu, *volumes, *env]
+    ports:
+      - "${JUPYTER_PORT:-8888}:8888"
+
+  streamlit:
+    build:
+      context: .
+      target: streamlit
+    <<: [*gpu, *volumes, *env]
+    ports:
+      - "${STREAMLIT_PORT:-8501}:8501"
+
+  train-baseline:
+    build:
+      context: .
+      target: base
+    <<: [*gpu, *volumes, *env]
+    command: uv run python scripts/train_baseline.py
+
+  train-hierarchical:
+    build:
+      context: .
+      target: base
+    <<: [*gpu, *volumes, *env]
+    command: uv run python scripts/train_hierarchical.py
+
+  benchmark:
+    build:
+      context: .
+      target: base
+    <<: [*gpu, *volumes, *env]
+    command: uv run python scripts/benchmark_latency.py
+
+  test:
+    build:
+      context: .
+      target: base
+    <<: [*gpu, *volumes, *env]
+    command: uv run pytest tests/ -v
+
+  shell:
+    build:
+      context: .
+      target: base
+    <<: [*gpu, *volumes, *env]
+    command: /bin/bash
+    stdin_open: true
+    tty: true
