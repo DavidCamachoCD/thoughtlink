@@ -168,11 +168,6 @@ uv run python scripts/benchmark_latency.py
 uv run pytest tests/ -v
 ```
 
-## Team
-
-- **David** -- Generative AI, RAG -- Infrastructure, pipeline, integration
-- **Nat** -- Data Science, ML, CV -- Signal processing, models, metrics
-
 ## References
 
 - [KernelCo/robot_control dataset](https://huggingface.co/datasets/KernelCo/robot_control)
