@@ -10,13 +10,28 @@ versioned according to [Semantic Versioning](https://semver.org/spec/v2.0.0.html
 ## [Unreleased]
 
 ### Planned
-- Streamlit real-time dashboard (`viz/dashboard.py`)
 - t-SNE/UMAP embedding visualization (`viz/latent_viz.py`)
-- MuJoCo robot controller integration (`bridge/brain_policy.py`)
 - ONNX model export pipeline
-- End-to-end demo script (`scripts/run_demo.py`)
 - Multi-robot orchestrator (`bridge/orchestrator.py`)
 - Jupyter notebooks (EDA, feature engineering, model comparison)
+
+---
+
+## [0.4.0] - 2026-02-07
+
+### Added
+
+#### Integration
+- `bridge/brain_policy.py`: BrainPolicy orchestrator — main loop from brain signals to robot actions with simulated real-time streaming
+- `scripts/run_demo.py`: End-to-end demo script with CLI args, live terminal output, color-coded actions, and summary statistics
+
+#### Visualization
+- `viz/dashboard.py`: Streamlit real-time dashboard with EEG traces, probability bars, action timeline, and step log
+- `viz/temporal_stability.py`: Publication-ready plots — action timeline, confidence trace, probability heatmap, and combined 3-panel report
+
+#### Documentation
+- Updated README.md with new commands (run_demo, dashboard) and v0.4.0 progress
+- Updated CHANGELOG.md
 
 ---
 
