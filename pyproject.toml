@@ -1,6 +1,6 @@
 [project]
 name = "thoughtlink"
-version = "0.1.0"
+version = "1.0.0"
 description = "ThoughtLink: Brain-to-Robot intent decoding using non-invasive EEG/NIRS signals"
 requires-python = ">=3.11,<3.14"
 dependencies = [
@@ -20,6 +20,7 @@ dependencies = [
     "PyWavelets>=1.5",
     "pytest>=8.0",
     "pandas>=2.1",
+    "skl2onnx>=0.7",
     "jupyter>=1.0",
     "ipykernel>=6.0",
 ]

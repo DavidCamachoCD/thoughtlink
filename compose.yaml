@@ -1,15 +1,17 @@
 # ThoughtLink - Compose Specification (Docker Compose V2)
 # https://docs.docker.com/compose/compose-file/
 #
-# Prerequisitos:
+# Prerequisites:
 #   - Docker Engine 24+
 #   - NVIDIA Container Toolkit: https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/
 #
-# Uso:
-#   docker compose up jupyter          # Notebooks en http://localhost:8888
-#   docker compose up streamlit        # Dashboard en http://localhost:8501
+# Usage:
+#   docker compose up jupyter          # Notebooks at http://localhost:8888
+#   docker compose up streamlit        # Dashboard at http://localhost:8501
 #   docker compose run --rm train-baseline
 #   docker compose run --rm train-hierarchical
+#   docker compose run --rm train-wavelet
+#   docker compose run --rm export-onnx
 #   docker compose run --rm benchmark
 #   docker compose run --rm test
 #   docker compose run --rm shell
@@ -69,6 +71,20 @@ services:
       target: base
     <<: [*gpu, *volumes, *env]
     command: uv run python scripts/train_hierarchical.py
+
+  train-wavelet:
+    build:
+      context: .
+      target: base
+    <<: [*gpu, *volumes, *env]
+    command: uv run python scripts/train_wavelet.py
+
+  export-onnx:
+    build:
+      context: .
+      target: base
+    <<: [*gpu, *volumes, *env]
+    command: uv run python scripts/export_onnx.py
 
   benchmark:
     build:

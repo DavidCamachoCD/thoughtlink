@@ -10,8 +10,8 @@
 ### Setup
 
 ```bash
-git clone <repo-url>
-cd hackaton
+git clone https://github.com/DavidCamachoCD/thoughtlink.git
+cd thoughtlink
 uv sync
 ```
 

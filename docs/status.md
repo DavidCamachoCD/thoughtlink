@@ -1,6 +1,6 @@
 # ThoughtLink — Development Status
 
-Last updated: **2026-02-07**
+Last updated: **2026-02-08**
 
 ---
 
@@ -12,7 +12,7 @@ Last updated: **2026-02-07**
 | v0.2.0 | Sat 17:00–21:00 | Features + baseline models | **Done** |
 | v0.3.0 | Sat 21:00–01:00 | Hierarchical model + stability | **Done** |
 | v0.4.0 | Sun 01:00–04:00 | Integration + demo + orchestrator | **Done** |
-| v1.0.0 | Sun 04:00–08:00 | Polish + presentation | **In Progress** |
+| v1.0.0 | Sun 04:00–08:00 | Polish + presentation | **Done** |
 
 ---
 
@@ -30,14 +30,14 @@ Based on [Section 6 of the challenge PDF](../docs/problem/9.%20ThoughtLink%20-%2
 | Multi-class decoding (4 active classes) | `models/hierarchical.py` Stage 2 |
 | 4 baseline models (LogReg, SVM Linear, SVM RBF, RF) | `models/baseline.py` |
 | Compact CNN (EEGNet, PyTorch) | `models/cnn.py` |
+| Temporal GRU model for sequential decoding | `models/temporal.py` |
 | Training scripts with full metrics export | `scripts/train_baseline.py`, `scripts/train_hierarchical.py` |
 
 **What we followed from the challenge:**
 - Started with binary classification, then expanded to multi-class (Section 5: "Suggested Progression")
 - Used classical supervised learning first (Section 5: "Strong baselines")
 - Implemented hierarchical intent models (Section 3: "Example Directions")
-
-**Gap:** No temporal models (RNN/GRU/transformer). Planned in roadmap as `models/temporal.py` but not implemented.
+- Added temporal GRU model for capturing sequential dynamics across windows
 
 ---
 
@@ -49,9 +49,8 @@ Based on [Section 6 of the challenge PDF](../docs/problem/9.%20ThoughtLink%20-%2
 |---|---|
 | Real-time rolling buffer decoder | `inference/decoder.py` |
 | Per-component latency benchmark | `scripts/benchmark_latency.py` |
+| ONNX export for optimized inference | `scripts/export_onnx.py` |
 | Target: <50ms end-to-end | Achieved ~3-8ms with SVM |
-
-**Gap:** No ONNX export for optimized production inference. Stretch goal.
 
 ---
 
@@ -127,8 +126,8 @@ The full loop is now closed: brain signals -> decode -> stabilize -> action -> U
 
 | Bonus | Status | Location |
 |---|---|---|
-| Latency–accuracy tradeoffs | **Partial** — benchmark exists, comparison plot missing | `scripts/benchmark_latency.py` |
-| Compare simple vs complex models | **Partial** — models exist, comparison notebook missing | `models/baseline.py` vs `models/hierarchical.py` vs `models/cnn.py` |
+| Latency–accuracy tradeoffs | **Done** — benchmark + comparison plot | `scripts/benchmark_latency.py`, `notebooks/03_model_comparison.ipynb` |
+| Compare simple vs complex models | **Done** — full model comparison | `notebooks/03_model_comparison.ipynb`, `notebooks/05_wavelet_vs_baseline_comparison.ipynb` |
 | Failure modes documented | **Done** | `README.md` — 6 failure modes |
 | Open research questions | **Done** | `README.md` — 5 questions |
 
@@ -142,7 +141,7 @@ The full loop is now closed: brain signals -> decode -> stabilize -> action -> U
 |---|---|---|
 | `data/loader.py` | Done | David |
 | `data/splitter.py` | Done | David |
-| `data/dataset.py` | **Not started** | — |
+| `data/dataset.py` | Done | David |
 | `preprocessing/eeg.py` | Done | Nat |
 | `preprocessing/nirs.py` | Done | Nat |
 | `preprocessing/windowing.py` | Done | David |
@@ -152,7 +151,7 @@ The full loop is now closed: brain signals -> decode -> stabilize -> action -> U
 | `models/baseline.py` | Done | Nat |
 | `models/hierarchical.py` | Done | David |
 | `models/cnn.py` | Done | Nat |
-| `models/temporal.py` | **Not started** | — |
+| `models/temporal.py` | Done | David |
 | `inference/decoder.py` | Done | David |
 | `inference/confidence.py` | Done | David |
 | `inference/smoother.py` | Done (re-export) | David |
@@ -162,7 +161,7 @@ The full loop is now closed: brain signals -> decode -> stabilize -> action -> U
 | `bridge/mujoco_controller.py` | Done | David |
 | `viz/dashboard.py` | Done | David |
 | `viz/temporal_stability.py` | Done | David |
-| `viz/latent_viz.py` | **Not started** | Nat |
+| `viz/latent_viz.py` | Done | Nat |
 
 ### Scripts
 
@@ -170,9 +169,11 @@ The full loop is now closed: brain signals -> decode -> stabilize -> action -> U
 |---|---|---|
 | `scripts/train_baseline.py` | Done | Nat |
 | `scripts/train_hierarchical.py` | Done | David |
+| `scripts/train_wavelet.py` | Done | Nat |
 | `scripts/benchmark_latency.py` | Done | Nat |
 | `scripts/run_demo.py` | Done | David |
 | `scripts/run_mujoco_demo.py` | Done | David |
+| `scripts/export_onnx.py` | Done | David |
 
 ### Tests
 
@@ -182,30 +183,16 @@ The full loop is now closed: brain signals -> decode -> stabilize -> action -> U
 | `tests/test_features.py` | 11 | Passing |
 | `tests/test_inference.py` | 9 | Passing |
 | `tests/test_bridge.py` | 29 | Passing |
-| **Total** | **59** | **All passing** |
+| `tests/test_temporal.py` | 12 | Passing |
+| `tests/test_dataset.py` | 9 | Passing |
+| **Total** | **80** | **All passing** |
 
 ### Notebooks
 
 | File | Status |
 |---|---|
-| `notebooks/01_data_exploration.ipynb` | **Not started** |
-| `notebooks/02_feature_engineering.ipynb` | **Not started** |
-| `notebooks/03_model_comparison.ipynb` | **Not started** |
-
----
-
-## What to Prioritize Next
-
-### High Impact (for judges)
-1. **Run training + demo with real data** — Need actual accuracy numbers
-2. **Model comparison table** — Accuracy/kappa/latency for all models side by side
-3. ~~**MuJoCo integration**~~ — **Done.** `MuJoCoController` + `run_mujoco_demo.py`
-
-### Medium Impact
-4. **Latency vs accuracy scatter plot** — Bonus points
-5. **t-SNE/UMAP of feature space** — Shows class separability
-
-### Low Impact (nice to have)
-6. ONNX export
-7. Temporal model (GRU)
-8. EDA notebook
+| `notebooks/01_data_exploration.ipynb` | Done |
+| `notebooks/02_feature_engineering.ipynb` | Done |
+| `notebooks/03_model_comparison.ipynb` | Done |
+| `notebooks/04_wavelet_analysis.ipynb` | Done (bonus) |
+| `notebooks/05_wavelet_vs_baseline_comparison.ipynb` | Done (bonus) |

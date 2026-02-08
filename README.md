@@ -16,7 +16,7 @@ Built for **Global AI Hackathon** (Hack-Nation x Kernel x Dimensional), Feb 7-8,
         |
         v
 [Feature Extraction]
-  Band Power (mu/beta) + Hjorth + NIRS fusion
+  Band Power (mu/beta) + Hjorth + Time Domain + DWT Wavelets
         |
         v
 [Hierarchical Classifier]
@@ -60,64 +60,75 @@ thoughtlink/
 ├── Dockerfile                  # CUDA 12.4 + Python 3.12 + MuJoCo
 ├── configs/default.yaml        # Centralized hyperparameters
 ├── src/thoughtlink/
-│   ├── data/                   # HuggingFace loader + subject-aware splitting
-│   ├── preprocessing/          # EEG (MNE), NIRS, sliding windows
-│   ├── features/               # Band power, Hjorth, NIRS features, fusion
-│   ├── models/                 # Baselines (sklearn), Hierarchical, EEGNet (PyTorch)
+│   ├── data/                   # HuggingFace loader, subject-aware splitting, PyTorch Dataset
+│   ├── preprocessing/          # EEG (MNE), NIRS, sliding windows, augmentation
+│   ├── features/               # Band power, Hjorth, time-domain, DWT wavelets, CSP, fusion
+│   ├── models/                 # Baselines (sklearn), Hierarchical, EEGNet (PyTorch), GRU temporal
 │   ├── inference/              # Real-time decoder, confidence filter, smoother
-│   ├── bridge/                 # Intent-to-action mapping + BrainPolicy + MuJoCo controller
-│   └── viz/                    # Streamlit dashboard + temporal stability plots
-├── scripts/                    # Training & benchmarking scripts
-├── tests/                      # Unit tests (59 passing)
-└── notebooks/                  # EDA & model comparison (planned)
+│   ├── bridge/                 # Intent-to-action mapping, BrainPolicy, MuJoCo controller, orchestrator
+│   └── viz/                    # Streamlit dashboard, temporal stability, t-SNE/UMAP latent viz
+├── scripts/                    # Training, benchmarking, ONNX export
+├── tests/                      # Unit tests (212 passing)
+└── notebooks/                  # EDA, feature engineering, model comparison, wavelet analysis
 ```
+
+## Models
+
+| Model | Type | File |
+|-------|------|------|
+| Logistic Regression | sklearn | `models/baseline.py` |
+| SVM (Linear + RBF) | sklearn | `models/baseline.py` |
+| Random Forest | sklearn | `models/baseline.py` |
+| Hierarchical 2-Stage | sklearn | `models/hierarchical.py` |
+| EEGNet CNN | PyTorch | `models/cnn.py` |
+| Temporal GRU | PyTorch | `models/temporal.py` |
+| Voting Ensemble | sklearn | `models/ensemble.py` |
 
 ## Progress
 
-### v0.1.0 - v0.3.0: Core pipeline (done)
+### v0.1.0 - v0.3.0: Core pipeline
 
 - [x] Project scaffolding with UV, pyproject.toml, configs
 - [x] Data pipeline: HuggingFace download, `.npz` parsing, subject-aware split
 - [x] EEG preprocessing: bandpass 1-40 Hz, CAR via MNE-Python
 - [x] NIRS preprocessing: baseline correction, SDS selection, PCA
 - [x] Windowing: 1s sliding windows with 50% overlap (~15x augmentation)
-- [x] Feature extraction: band power (4 bands x 6 ch), Hjorth params, NIRS temporal
-- [x] Feature fusion: EEG + NIRS concatenation (~62 features/window)
+- [x] Feature extraction: band power, Hjorth, time-domain, DWT wavelets, CSP
+- [x] Feature fusion: EEG + NIRS concatenation (~66 features/window)
 - [x] Baseline models: LogReg, SVM Linear, SVM RBF, Random Forest
 - [x] Hierarchical classifier: 2-stage rest-gate + 4-class decoder
 - [x] EEGNet CNN: compact PyTorch (~2-4K params, <3ms inference target)
 - [x] Stability pipeline: confidence threshold + hysteresis + debouncing + majority voting
 - [x] Real-time decoder: rolling buffer with windowed prediction
 - [x] Intent-to-action mapping: 5 classes -> robot Action enum
-- [x] Training scripts: baseline + hierarchical with metrics export
+- [x] Training scripts: baseline + hierarchical + wavelet with metrics export
 - [x] Latency benchmark script: per-component timing (target <50ms)
-- [x] Unit tests: 30/30 passing (preprocessing, features, inference)
 - [x] Docker: CUDA 12.4 + Compose V2 with GPU support
-- [x] Security: .gitignore hardened, .env.example, .dockerignore
 
-### v0.4.0: Integration (done)
+### v0.4.0: Integration
 
 - [x] BrainPolicy: main loop from brain signals to robot actions (`bridge/brain_policy.py`)
 - [x] End-to-end demo script (`scripts/run_demo.py`) with live terminal output
 - [x] Streamlit real-time dashboard (`viz/dashboard.py`)
 - [x] Temporal stability visualization (`viz/temporal_stability.py`)
 - [x] Multi-robot orchestrator (`bridge/orchestrator.py`) with simulated fleet
-- [x] Tests for bridge module: 50/50 total passing
-- [ ] ONNX model export (stretch goal)
 
-### v0.5.0: MuJoCo integration (done)
+### v0.5.0: MuJoCo integration
 
 - [x] MuJoCo controller wrapping `bri` package (`bridge/mujoco_controller.py`)
 - [x] Unitree G1 humanoid simulation via [brain-robot-interface](https://github.com/Nabla7/brain-robot-interface)
 - [x] MuJoCo demo script: brain signals -> humanoid robot (`scripts/run_mujoco_demo.py`)
-- [x] Controller implements `RobotController` protocol (drop-in for Orchestrator)
-- [x] Tests for MuJoCoController: 59/59 total passing
 
-### v1.0.0: Demo & polish (next)
+### v1.0.0: Demo & polish
 
-- [ ] t-SNE/UMAP embedding visualization
-- [ ] Model comparison notebook
-- [ ] Latency vs accuracy tradeoff plots
+- [x] Temporal GRU model for sequential EEG decoding (`models/temporal.py`)
+- [x] PyTorch Dataset wrapper (`data/dataset.py`)
+- [x] ONNX export script for production inference (`scripts/export_onnx.py`)
+- [x] t-SNE/UMAP embedding visualization (`viz/latent_viz.py`)
+- [x] Feature engineering notebook with separability analysis
+- [x] Model comparison notebook with full metrics
+- [x] Wavelet analysis notebooks (DWT features + baseline comparison)
+- [x] 212 unit tests passing
 
 ## Setup
 
@@ -132,8 +143,11 @@ git clone https://github.com/DavidCamachoCD/thoughtlink.git
 cd thoughtlink
 uv sync
 
+# With MuJoCo simulation support
+uv sync --extra sim
+
 # Run tests
-uv run pytest tests/ -v
+uv run python -m pytest tests/ -v
 ```
 
 ### Docker (Ubuntu AMD64 + NVIDIA GPU)
@@ -150,6 +164,10 @@ docker compose up jupyter
 # Train models
 docker compose run --rm train-baseline
 docker compose run --rm train-hierarchical
+docker compose run --rm train-wavelet
+
+# Export models to ONNX
+docker compose run --rm export-onnx
 
 # Benchmark latency
 docker compose run --rm benchmark
@@ -169,6 +187,12 @@ uv run python scripts/train_baseline.py
 
 # Train hierarchical 2-stage model
 uv run python scripts/train_hierarchical.py
+
+# Train with wavelet features
+uv run python scripts/train_wavelet.py
+
+# Export trained models to ONNX
+uv run python scripts/export_onnx.py
 
 # Run end-to-end demo (replays .npz files through full pipeline)
 uv run python scripts/run_demo.py
