@@ -144,7 +144,10 @@ def extract_features_from_windows(
     Returns:
         Feature matrix of shape (n_windows, n_features).
     """
-    return np.array([
+    features = np.array([
         extract_window_features(w, sfreq, include_hjorth, include_time_domain)
         for w in windows
     ])
+    # Replace NaN/Inf from edge effects in bandpass filtering or zero-variance windows
+    np.nan_to_num(features, copy=False, nan=0.0, posinf=0.0, neginf=0.0)
+    return features

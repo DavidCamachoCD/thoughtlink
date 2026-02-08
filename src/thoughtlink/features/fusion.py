@@ -21,6 +21,29 @@ def fuse_features(
     return np.concatenate([eeg_features, nirs_features])
 
 
+def fuse_all_features(
+    eeg_features: np.ndarray,
+    csp_features: np.ndarray | None = None,
+    nirs_features: np.ndarray | None = None,
+) -> np.ndarray:
+    """Concatenate all feature types column-wise.
+
+    Args:
+        eeg_features: Shape (n_samples, n_eeg_features).
+        csp_features: Shape (n_samples, n_csp_features) or None.
+        nirs_features: Shape (n_samples, n_nirs_features) or None.
+
+    Returns:
+        Combined matrix.
+    """
+    parts = [eeg_features]
+    if csp_features is not None:
+        parts.append(csp_features)
+    if nirs_features is not None:
+        parts.append(nirs_features)
+    return np.hstack(parts)
+
+
 def fuse_feature_matrices(
     eeg_matrix: np.ndarray,
     nirs_matrix: np.ndarray | None = None,
