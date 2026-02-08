@@ -78,6 +78,40 @@ def export_sklearn_to_onnx(
     print(f"Exported {model_path.name} -> {output_path}")
 
 
+def export_sklearn_pipeline_to_onnx(
+    pipeline,
+    output_path: Path,
+    n_features: int = 66,
+    name: str = "model",
+) -> None:
+    """Export an in-memory sklearn pipeline to ONNX.
+
+    Args:
+        pipeline: Fitted sklearn Pipeline object.
+        output_path: Path to save .onnx file.
+        n_features: Number of input features.
+        name: Label for log messages.
+    """
+    try:
+        from skl2onnx import convert_sklearn
+        from skl2onnx.common.data_types import FloatTensorType
+    except ImportError:
+        print("skl2onnx not installed, skipping sklearn export")
+        return
+
+    initial_type = [("float_input", FloatTensorType([None, n_features]))]
+    onnx_model = convert_sklearn(
+        pipeline,
+        initial_types=initial_type,
+        target_opset=14,
+    )
+
+    with open(output_path, "wb") as f:
+        f.write(onnx_model.SerializeToString())
+    print(f"Exported {name} -> {output_path}")
+    verify_onnx(output_path, (n_features,))
+
+
 def verify_onnx(onnx_path: Path, input_shape: tuple[int, ...]) -> None:
     """Verify ONNX model inference with dummy data.
 
@@ -118,13 +152,26 @@ def main() -> None:
     else:
         print(f"No baseline model at {baseline_path}, skipping baseline export")
 
-    # Export hierarchical model
+    # Export hierarchical model (sub-stages separately)
     hier_path = results_dir / "hierarchical_model.pkl"
     if hier_path.exists():
-        onnx_path = results_dir / "hierarchical_model.onnx"
-        export_sklearn_to_onnx(hier_path, onnx_path, n_features=66)
-        if onnx_path.exists():
-            verify_onnx(onnx_path, (66,))
+        with open(hier_path, "rb") as f:
+            hier_model = pickle.load(f)
+
+        # Stage 1: binary (Relax vs Active)
+        export_sklearn_pipeline_to_onnx(
+            hier_model.stage1_model,
+            results_dir / "hierarchical_stage1.onnx",
+            n_features=66,
+            name="hierarchical_stage1",
+        )
+        # Stage 2: 4-class active intent
+        export_sklearn_pipeline_to_onnx(
+            hier_model.stage2_model,
+            results_dir / "hierarchical_stage2.onnx",
+            n_features=66,
+            name="hierarchical_stage2",
+        )
     else:
         print(f"No hierarchical model at {hier_path}, skipping")
 
