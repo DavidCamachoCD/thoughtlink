@@ -10,7 +10,10 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from thoughtlink.preprocessing.eeg import preprocess_eeg
-from thoughtlink.features.eeg_features import extract_window_features
+from thoughtlink.features.eeg_features import (
+    extract_window_features,
+    compute_wavelet_features,
+)
 from thoughtlink.inference.confidence import StabilityPipeline
 from thoughtlink.data.loader import CLASS_NAMES
 
@@ -46,9 +49,19 @@ def main():
     mean_ms, std_ms = benchmark(preprocess_eeg, full_eeg, n_runs=n_runs)
     print(f"{'EEG Preprocessing (15s):':<35} {mean_ms:>8.2f} +/- {std_ms:.2f} ms")
 
-    # 2. Feature extraction
+    # 2. Feature extraction (without wavelet)
     mean_ms, std_ms = benchmark(extract_window_features, window, n_runs=n_runs)
     print(f"{'Feature Extraction (1s window):':<35} {mean_ms:>8.2f} +/- {std_ms:.2f} ms")
+
+    # 2b. Wavelet features only
+    mean_ms, std_ms = benchmark(compute_wavelet_features, window, n_runs=n_runs)
+    print(f"{'Wavelet Features (DWT db4, 1s):':<35} {mean_ms:>8.2f} +/- {std_ms:.2f} ms")
+
+    # 2c. Full features with wavelet
+    mean_ms, std_ms = benchmark(
+        extract_window_features, window, n_runs=n_runs, include_wavelet=True,
+    )
+    print(f"{'Full Features + Wavelet (1s):':<35} {mean_ms:>8.2f} +/- {std_ms:.2f} ms")
 
     # 3. Model inference (if trained model exists)
     model_path = Path("results/best_baseline.pkl")

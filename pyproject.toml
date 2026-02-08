@@ -17,6 +17,7 @@ dependencies = [
     "huggingface-hub>=0.20",
     "datasets>=2.16",
     "pyyaml>=6.0",
+    "PyWavelets>=1.5",
     "pytest>=8.0",
     "pandas>=2.1",
     "jupyter>=1.0",
