@@ -65,10 +65,10 @@ thoughtlink/
 │   ├── features/               # Band power, Hjorth, NIRS features, fusion
 │   ├── models/                 # Baselines (sklearn), Hierarchical, EEGNet (PyTorch)
 │   ├── inference/              # Real-time decoder, confidence filter, smoother
-│   ├── bridge/                 # Intent-to-action mapping + BrainPolicy loop
+│   ├── bridge/                 # Intent-to-action mapping + BrainPolicy + MuJoCo controller
 │   └── viz/                    # Streamlit dashboard + temporal stability plots
 ├── scripts/                    # Training & benchmarking scripts
-├── tests/                      # Unit tests (30 passing)
+├── tests/                      # Unit tests (59 passing)
 └── notebooks/                  # EDA & model comparison (planned)
 ```
 
@@ -104,6 +104,14 @@ thoughtlink/
 - [x] Multi-robot orchestrator (`bridge/orchestrator.py`) with simulated fleet
 - [x] Tests for bridge module: 50/50 total passing
 - [ ] ONNX model export (stretch goal)
+
+### v0.5.0: MuJoCo integration (done)
+
+- [x] MuJoCo controller wrapping `bri` package (`bridge/mujoco_controller.py`)
+- [x] Unitree G1 humanoid simulation via [brain-robot-interface](https://github.com/Nabla7/brain-robot-interface)
+- [x] MuJoCo demo script: brain signals -> humanoid robot (`scripts/run_mujoco_demo.py`)
+- [x] Controller implements `RobotController` protocol (drop-in for Orchestrator)
+- [x] Tests for MuJoCoController: 59/59 total passing
 
 ### v1.0.0: Demo & polish (next)
 
@@ -165,6 +173,10 @@ uv run python scripts/train_hierarchical.py
 # Run end-to-end demo (replays .npz files through full pipeline)
 uv run python scripts/run_demo.py
 uv run python scripts/run_demo.py --live --delay 0.1   # real-time terminal output
+
+# Run MuJoCo demo (brain signals -> humanoid robot in simulation)
+uv run mjpython scripts/run_mujoco_demo.py             # macOS
+uv run python scripts/run_mujoco_demo.py               # Linux
 
 # Launch Streamlit dashboard
 uv run streamlit run src/thoughtlink/viz/dashboard.py

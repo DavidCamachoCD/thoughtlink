@@ -1,4 +1,6 @@
-"""Tests for bridge module: BrainPolicy and Orchestrator."""
+"""Tests for bridge module: BrainPolicy, Orchestrator, and MuJoCoController."""
+
+from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
@@ -238,3 +240,121 @@ class TestOrchestrator:
         assert result.n_success == 100
         # Dispatch to 100 simulated robots should be well under 10ms
         assert result.dispatch_ms < 10.0
+
+
+# ── MuJoCoController Tests ──────────────────────────────────
+
+
+class TestMuJoCoController:
+    """Tests for MuJoCoController with mocked bri backend."""
+
+    @patch("thoughtlink.bridge.mujoco_controller.Controller")
+    def test_satisfies_protocol(self, MockCtrl):
+        """MuJoCoController has robot_id, execute, stop."""
+        from thoughtlink.bridge.mujoco_controller import MuJoCoController
+
+        ctrl = MuJoCoController(robot_id="test_g1")
+        assert hasattr(ctrl, "robot_id")
+        assert hasattr(ctrl, "execute")
+        assert hasattr(ctrl, "stop")
+
+    @patch("thoughtlink.bridge.mujoco_controller.Controller")
+    def test_robot_id(self, MockCtrl):
+        from thoughtlink.bridge.mujoco_controller import MuJoCoController
+
+        ctrl = MuJoCoController(robot_id="my_robot")
+        assert ctrl.robot_id == "my_robot"
+
+    @patch("thoughtlink.bridge.mujoco_controller.Controller")
+    def test_start(self, MockCtrl):
+        from thoughtlink.bridge.mujoco_controller import MuJoCoController
+
+        mock_instance = MockCtrl.return_value
+        ctrl = MuJoCoController()
+        ctrl.start()
+
+        mock_instance.start.assert_called_once()
+
+    @patch("thoughtlink.bridge.mujoco_controller.Controller")
+    def test_start_idempotent(self, MockCtrl):
+        from thoughtlink.bridge.mujoco_controller import MuJoCoController
+
+        mock_instance = MockCtrl.return_value
+        ctrl = MuJoCoController()
+        ctrl.start()
+        ctrl.start()  # second call should be no-op
+
+        mock_instance.start.assert_called_once()
+
+    @patch("thoughtlink.bridge.mujoco_controller.Controller")
+    @patch("thoughtlink.bridge.mujoco_controller.Action")
+    def test_execute_valid_actions(self, MockAction, MockCtrl):
+        from thoughtlink.bridge.mujoco_controller import MuJoCoController
+
+        mock_instance = MockCtrl.return_value
+        ctrl = MuJoCoController()
+        ctrl.start()
+
+        for action_str in ("RIGHT", "LEFT", "FORWARD", "STOP"):
+            result = ctrl.execute(action_str)
+            assert result is True
+
+        assert mock_instance.set_action.call_count == 4
+
+    @patch("thoughtlink.bridge.mujoco_controller.Controller")
+    def test_execute_auto_starts(self, MockCtrl):
+        from thoughtlink.bridge.mujoco_controller import MuJoCoController
+
+        mock_instance = MockCtrl.return_value
+        ctrl = MuJoCoController()
+        # Don't call start() explicitly
+        ctrl.execute("FORWARD")
+
+        mock_instance.start.assert_called_once()
+
+    @patch("thoughtlink.bridge.mujoco_controller.Controller")
+    @patch("thoughtlink.bridge.mujoco_controller.Action")
+    def test_stop(self, MockAction, MockCtrl):
+        from thoughtlink.bridge.mujoco_controller import MuJoCoController
+
+        mock_instance = MockCtrl.return_value
+        ctrl = MuJoCoController()
+        ctrl.start()
+        ctrl.stop()
+
+        mock_instance.set_action.assert_called()
+        mock_instance.stop.assert_called_once()
+
+    @patch("thoughtlink.bridge.mujoco_controller.Controller")
+    def test_stop_when_not_started(self, MockCtrl):
+        from thoughtlink.bridge.mujoco_controller import MuJoCoController
+
+        mock_instance = MockCtrl.return_value
+        ctrl = MuJoCoController()
+        ctrl.stop()  # should not raise
+
+        mock_instance.stop.assert_not_called()
+
+    @patch("thoughtlink.bridge.mujoco_controller.Controller")
+    def test_works_with_orchestrator(self, MockCtrl):
+        """MuJoCoController works as a drop-in for Orchestrator."""
+        from thoughtlink.bridge.mujoco_controller import MuJoCoController
+
+        ctrl = MuJoCoController(robot_id="g1_test")
+        ctrl.start()
+
+        orch = Orchestrator(controllers=[ctrl])
+        step = StepResult(
+            timestamp_s=0.0,
+            raw_intent="Right Fist",
+            stable_intent="Right Fist",
+            action="RIGHT",
+            confidence=0.9,
+            probs=np.array([0.9, 0.025, 0.025, 0.025, 0.025]),
+            latency_ms=1.0,
+        )
+        result = orch.dispatch(step)
+
+        assert result is not None
+        assert result.n_robots == 1
+        assert result.n_success == 1
