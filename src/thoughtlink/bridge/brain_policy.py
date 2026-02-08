@@ -55,9 +55,6 @@ class BrainPolicy:
         """
         eeg_cfg = config["preprocessing"]["eeg"]
         inf_cfg = config["inference"]
-        feat_cfg = config.get("features", {})
-        wavelet_cfg = feat_cfg.get("wavelet", {})
-        use_wavelet = wavelet_cfg.get("enabled", False)
 
         self.sfreq = eeg_cfg["sfreq"]
         self.prediction_hz = inf_cfg["prediction_hz"]
@@ -66,9 +63,7 @@ class BrainPolicy:
         self.decoder = RealtimeDecoder(
             model=model,
             feature_extractor=lambda w: extract_window_features(
-                w, sfreq=self.sfreq,
-                include_wavelet=use_wavelet,
-                wavelet_config=wavelet_cfg,
+                w, sfreq=self.sfreq
             ),
             window_size_s=config["preprocessing"]["window_duration_s"],
             sfreq=self.sfreq,

@@ -31,7 +31,7 @@ features:
   csp_n_components: 4
   hjorth: true
   wavelet:
-    enabled: true
+    enabled: false  # Set to true in train_wavelet.py for wavelet-based training
     family: "db4"
     levels: [3, 4, 5]
     include_approx: true

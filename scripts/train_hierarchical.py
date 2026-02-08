@@ -6,7 +6,6 @@ import pickle
 from pathlib import Path
 
 import numpy as np
-import yaml
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
@@ -38,25 +37,13 @@ def main():
     preprocess_all(train_samples)
     preprocess_all(test_samples)
 
-    # Load config for wavelet settings
-    config_path = Path(__file__).parent.parent / "configs" / "default.yaml"
-    with open(config_path) as f:
-        config = yaml.safe_load(f)
-    feat_cfg = config.get("features", {})
-    wavelet_cfg = feat_cfg.get("wavelet", {})
-    use_wavelet = wavelet_cfg.get("enabled", False)
-
     # 4. Extract windows and features
     print("\n[4/5] Extracting windows and features...")
     X_train_windows, y_train, _ = windows_from_samples(train_samples)
     X_test_windows, y_test, _ = windows_from_samples(test_samples)
 
-    X_train = extract_features_from_windows(
-        X_train_windows, include_wavelet=use_wavelet, wavelet_config=wavelet_cfg,
-    )
-    X_test = extract_features_from_windows(
-        X_test_windows, include_wavelet=use_wavelet, wavelet_config=wavelet_cfg,
-    )
+    X_train = extract_features_from_windows(X_train_windows, include_time_domain=True)
+    X_test = extract_features_from_windows(X_test_windows, include_time_domain=True)
     print(f"Train: {X_train.shape}, Test: {X_test.shape}")
 
     # 5. Train hierarchical model
