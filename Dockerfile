@@ -51,6 +51,7 @@ COPY configs/ configs/
 COPY scripts/ scripts/
 COPY tests/ tests/
 COPY notebooks/ notebooks/
+COPY docs/ docs/
 
 # Healthcheck: verify Python + thoughtlink importable
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \

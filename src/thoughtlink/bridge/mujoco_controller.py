@@ -11,7 +11,11 @@ Requires:
 
 import logging
 
-from bri import Action, Controller
+try:
+    from bri import Action, Controller
+except ImportError:
+    Action = None
+    Controller = None
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +45,10 @@ class MuJoCoController:
             yaw_rate: Rotational velocity (rad/s) for LEFT/RIGHT.
             smooth_alpha: Exponential smoothing factor (0-1).
         """
+        if Controller is None:
+            raise ImportError(
+                "bri package not installed. Run: uv sync --extra sim"
+            )
         self._robot_id = robot_id
         self._ctrl = Controller(
             backend="sim",

@@ -4,6 +4,7 @@
 venv
 .env
 .env.*
+!.env.example
 __pycache__
 *.pyc
 .DS_Store
@@ -12,6 +13,7 @@ __pycache__
 .idea/
 data/raw/
 data/processed/
+notebooks/data/
 results/
 *.onnx
 *.pt
@@ -23,4 +25,8 @@ results/
 dist/
 build/
 *.log
+*.bak
+*.tmp
 docs/problem/*.pdf
+ROADMAP.md
+CONTRIBUTING.md
