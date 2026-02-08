@@ -30,6 +30,12 @@ features:
     low_gamma: [30, 40]
   csp_n_components: 4
   hjorth: true
+  wavelet:
+    enabled: false  # Set to true in train_wavelet.py for wavelet-based training
+    family: "db4"
+    levels: [3, 4, 5]
+    include_approx: true
+    stats: ["energy", "entropy", "std"]
 
 models:
   hierarchical:
