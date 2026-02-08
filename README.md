@@ -65,10 +65,10 @@ thoughtlink/
 │   ├── features/               # Band power, Hjorth, NIRS features, fusion
 │   ├── models/                 # Baselines (sklearn), Hierarchical, EEGNet (PyTorch)
 │   ├── inference/              # Real-time decoder, confidence filter, smoother
-│   ├── bridge/                 # Intent-to-action mapping + BrainPolicy loop
+│   ├── bridge/                 # Intent-to-action mapping + BrainPolicy + MuJoCo controller
 │   └── viz/                    # Streamlit dashboard + temporal stability plots
 ├── scripts/                    # Training & benchmarking scripts
-├── tests/                      # Unit tests (30 passing)
+├── tests/                      # Unit tests (59 passing)
 └── notebooks/                  # EDA & model comparison (planned)
 ```
 
@@ -101,8 +101,17 @@ thoughtlink/
 - [x] End-to-end demo script (`scripts/run_demo.py`) with live terminal output
 - [x] Streamlit real-time dashboard (`viz/dashboard.py`)
 - [x] Temporal stability visualization (`viz/temporal_stability.py`)
-- [ ] Multi-robot orchestrator (stretch goal)
+- [x] Multi-robot orchestrator (`bridge/orchestrator.py`) with simulated fleet
+- [x] Tests for bridge module: 50/50 total passing
 - [ ] ONNX model export (stretch goal)
+
+### v0.5.0: MuJoCo integration (done)
+
+- [x] MuJoCo controller wrapping `bri` package (`bridge/mujoco_controller.py`)
+- [x] Unitree G1 humanoid simulation via [brain-robot-interface](https://github.com/Nabla7/brain-robot-interface)
+- [x] MuJoCo demo script: brain signals -> humanoid robot (`scripts/run_mujoco_demo.py`)
+- [x] Controller implements `RobotController` protocol (drop-in for Orchestrator)
+- [x] Tests for MuJoCoController: 59/59 total passing
 
 ### v1.0.0: Demo & polish (next)
 
@@ -165,6 +174,10 @@ uv run python scripts/train_hierarchical.py
 uv run python scripts/run_demo.py
 uv run python scripts/run_demo.py --live --delay 0.1   # real-time terminal output
 
+# Run MuJoCo demo (brain signals -> humanoid robot in simulation)
+uv run mjpython scripts/run_mujoco_demo.py             # macOS
+uv run python scripts/run_mujoco_demo.py               # Linux
+
 # Launch Streamlit dashboard
 uv run streamlit run src/thoughtlink/viz/dashboard.py
 
@@ -174,6 +187,31 @@ uv run python scripts/benchmark_latency.py
 # Run unit tests
 uv run python -m pytest tests/ -v
 ```
+
+## Known Failure Modes & Open Research Questions
+
+### Failure Modes
+
+| Failure Mode | Impact | Current Mitigation |
+|---|---|---|
+| **Subject variability** | EEG patterns differ between individuals; model trained on subjects A-D may fail on subject E | Subject-aware splitting prevents data leakage, but cross-subject generalization remains limited |
+| **Low-channel limitation** | Only 6 EEG channels (vs 64+ in research BCIs); spatial resolution is poor for fine motor imagery | CSP optimizes available channels; focus on FCz/CPz (motor cortex) for strongest signal |
+| **Class confusion: Both Fists vs single fist** | Bilateral and unilateral motor imagery share overlapping mu/beta suppression patterns | Hierarchical model isolates rest first, reducing 5-class to 4-class problem |
+| **Relax state contamination** | Drowsiness or distraction during "active" periods produces false rest classification | Stage 1 rest-gate has high sensitivity; hysteresis prevents rapid oscillation |
+| **Temporal lag** | 1s window + stability pipeline adds ~1-2s latency between intent and action | Acceptable for high-level commands (not fine motor control); configurable trade-off |
+| **NIRS slow dynamics** | fNIRS at 4.76 Hz cannot track fast intent changes; hemodynamic response is ~5s delayed | NIRS used only as secondary robustness signal, not primary decision driver |
+
+### Open Research Questions
+
+1. **Cross-subject transfer learning** — Can a model trained on N subjects generalize to a new unseen subject without calibration? Current BCI research suggests domain adaptation or few-shot fine-tuning is needed.
+
+2. **Phase-aware intent modeling** — Our system treats each window independently. Modeling intent phases (initiation, sustain, release) could improve transition detection and reduce false triggers during state changes.
+
+3. **Optimal complexity vs latency** — Our hierarchical SVM achieves a good balance, but when does a CNN or transformer actually improve accuracy enough to justify the added inference cost? Our benchmark infrastructure enables this comparison.
+
+4. **Scalability bottleneck** — Our orchestrator dispatches O(N) synchronously. For 1000+ robots, async dispatch with priority queues and failure-aware routing would be needed.
+
+5. **Confidence calibration** — Are the model's `predict_proba` outputs well-calibrated? Overconfident models could bypass the confidence threshold and cause false triggers. Platt scaling or isotonic regression could help.
 
 ## References
 
