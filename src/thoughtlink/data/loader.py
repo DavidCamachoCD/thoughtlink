@@ -63,7 +63,14 @@ def load_all(data_dir: Optional[str] = None, cache_dir: str = "./data/raw") -> l
     else:
         data_dir = Path(data_dir)
 
-    npz_files = sorted(data_dir.rglob("*.npz"))
+    # Deduplicate: HuggingFace cache creates both real files and symlinks
+    # under different subdirectories. Keep only one per filename.
+    seen_names: set[str] = set()
+    npz_files = []
+    for p in sorted(data_dir.rglob("*.npz")):
+        if p.name not in seen_names:
+            seen_names.add(p.name)
+            npz_files.append(p)
 
     if not npz_files:
         raise FileNotFoundError(
