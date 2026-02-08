@@ -104,7 +104,7 @@ The hierarchical model is specifically designed to reduce false triggers: if Sta
 
 ---
 
-### 6. Demo Clarity (**Good**)
+### 6. Demo Clarity (**Strong**)
 
 > "Is the intent-to-action loop clearly demonstrated in simulation?"
 
@@ -114,8 +114,10 @@ The hierarchical model is specifically designed to reduce false triggers: if Sta
 | Live terminal output with color-coded actions | `scripts/run_demo.py --live` |
 | Streamlit dashboard (EEG + probs + timeline + log) | `viz/dashboard.py` |
 | BrainPolicy orchestrator (full loop) | `bridge/brain_policy.py` |
+| MuJoCo controller wrapping `bri` (Unitree G1 humanoid) | `bridge/mujoco_controller.py` |
+| MuJoCo demo: brain signals drive robot in simulation | `scripts/run_mujoco_demo.py` |
 
-**Gap:** Not connected to MuJoCo simulation. The demo shows predictions and actions in terminal/dashboard, but not a robot moving in a physics simulator.
+The full loop is now closed: brain signals -> decode -> stabilize -> action -> Unitree G1 humanoid walking in MuJoCo.
 
 ---
 
@@ -157,6 +159,7 @@ The hierarchical model is specifically designed to reduce false triggers: if Sta
 | `bridge/intent_to_action.py` | Done | David |
 | `bridge/brain_policy.py` | Done | David |
 | `bridge/orchestrator.py` | Done | David |
+| `bridge/mujoco_controller.py` | Done | David |
 | `viz/dashboard.py` | Done | David |
 | `viz/temporal_stability.py` | Done | David |
 | `viz/latent_viz.py` | **Not started** | Nat |
@@ -169,6 +172,7 @@ The hierarchical model is specifically designed to reduce false triggers: if Sta
 | `scripts/train_hierarchical.py` | Done | David |
 | `scripts/benchmark_latency.py` | Done | Nat |
 | `scripts/run_demo.py` | Done | David |
+| `scripts/run_mujoco_demo.py` | Done | David |
 
 ### Tests
 
@@ -177,8 +181,8 @@ The hierarchical model is specifically designed to reduce false triggers: if Sta
 | `tests/test_preprocessing.py` | 10 | Passing |
 | `tests/test_features.py` | 11 | Passing |
 | `tests/test_inference.py` | 9 | Passing |
-| `tests/test_bridge.py` | 20 | Passing |
-| **Total** | **50** | **All passing** |
+| `tests/test_bridge.py` | 29 | Passing |
+| **Total** | **59** | **All passing** |
 
 ### Notebooks
 
@@ -195,7 +199,7 @@ The hierarchical model is specifically designed to reduce false triggers: if Sta
 ### High Impact (for judges)
 1. **Run training + demo with real data** — Need actual accuracy numbers
 2. **Model comparison table** — Accuracy/kappa/latency for all models side by side
-3. **MuJoCo integration** — Closes the "Demo Clarity" gap
+3. ~~**MuJoCo integration**~~ — **Done.** `MuJoCoController` + `run_mujoco_demo.py`
 
 ### Medium Impact
 4. **Latency vs accuracy scatter plot** — Bonus points
