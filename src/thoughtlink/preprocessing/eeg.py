@@ -50,6 +50,18 @@ def preprocess_eeg(
     Returns:
         Preprocessed EEG data, shape (n_samples, n_channels), in microvolts.
     """
+    # Interpolate NaN values before filtering (sensor dropouts)
+    if np.any(np.isnan(eeg_data)):
+        eeg_data = eeg_data.copy()
+        for ch in range(eeg_data.shape[1]):
+            mask = np.isnan(eeg_data[:, ch])
+            if mask.any() and not mask.all():
+                eeg_data[mask, ch] = np.interp(
+                    np.flatnonzero(mask),
+                    np.flatnonzero(~mask),
+                    eeg_data[~mask, ch],
+                )
+
     raw = create_raw(eeg_data, sfreq)
 
     # Bandpass filter
