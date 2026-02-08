@@ -44,8 +44,8 @@ def main():
     X_test_windows, y_test, _ = windows_from_samples(test_samples)
     print(f"Train windows: {X_train_windows.shape}, Test windows: {X_test_windows.shape}")
 
-    X_train = extract_features_from_windows(X_train_windows)
-    X_test = extract_features_from_windows(X_test_windows)
+    X_train = extract_features_from_windows(X_train_windows, include_time_domain=True)
+    X_test = extract_features_from_windows(X_test_windows, include_time_domain=True)
     print(f"Train features: {X_train.shape}, Test features: {X_test.shape}")
 
     # 5. Train and evaluate

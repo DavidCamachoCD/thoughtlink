@@ -42,8 +42,8 @@ def main():
     X_train_windows, y_train, _ = windows_from_samples(train_samples)
     X_test_windows, y_test, _ = windows_from_samples(test_samples)
 
-    X_train = extract_features_from_windows(X_train_windows)
-    X_test = extract_features_from_windows(X_test_windows)
+    X_train = extract_features_from_windows(X_train_windows, include_time_domain=True)
+    X_test = extract_features_from_windows(X_test_windows, include_time_domain=True)
     print(f"Train: {X_train.shape}, Test: {X_test.shape}")
 
     # 5. Train hierarchical model
