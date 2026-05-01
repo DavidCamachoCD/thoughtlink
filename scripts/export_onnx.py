@@ -134,7 +134,7 @@ def main() -> None:
     # Export CNN if checkpoint exists
     cnn_path = results_dir / "cnn_model.pt"
     if cnn_path.exists():
-        model = EEGNet(n_classes=5, n_channels=6, n_samples=500)
+        model = EEGNet(n_classes=5, n_channels=6, n_samples=500, f1=16, f2=32, d=2)
         model.load_state_dict(torch.load(cnn_path, weights_only=True))
         onnx_path = results_dir / "eegnet.onnx"
         export_cnn_to_onnx(model, onnx_path)
