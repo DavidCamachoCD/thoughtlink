@@ -45,7 +45,7 @@ Built for **Global AI Hackathon** (Hack-Nation x Kernel x Dimensional), Feb 7-8,
 |----------|-------|
 | Source | [KernelCo/robot_control](https://huggingface.co/datasets/KernelCo/robot_control) |
 | Format | `.npz`, 15-second chunks |
-| Samples | ~900 files |
+| Samples | 1395 files (17 subjects, ~82 chunks/subject) |
 | EEG | 6 channels (AFF6, AFp2, AFp1, AFF5, FCz, CPz), 500 Hz |
 | TD-NIRS | 40 modules, 4.76 Hz, 5D tensor `(72, 40, 3, 2, 3)` |
 | Classes | Right Fist, Left Fist, Both Fists, Tongue Tapping, Relax |
