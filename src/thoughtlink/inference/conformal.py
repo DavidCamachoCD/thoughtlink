@@ -5,16 +5,21 @@ drawn from the same distribution as the calibration set, the returned
 prediction set is guaranteed to contain the true label with probability
 >= 1 - alpha (Vovk, Gammerman & Shafer 2005; Angelopoulos & Bates 2023).
 
-Two score functions are exposed:
+Three score functions are exposed:
 
-- `APSConformalPredictor`  -- Adaptive Prediction Sets (Romano, Sesia &
-                              Candes 2020). Score = sum of probabilities of
-                              classes ranked at-or-above the true class. Sets
-                              shrink when the model is confident and grow when
-                              it is uncertain, while preserving marginal
-                              coverage. Recommended default.
-- `NaiveConformalPredictor` -- Score = 1 - p(y_true). Simpler but produces less
-                              adaptive sets; included for ablation only.
+- `APSConformalPredictor`         -- Adaptive Prediction Sets (Romano, Sesia &
+                                     Candes 2020). Score = sum of probabilities
+                                     of classes ranked at-or-above the true
+                                     class. Sets shrink when the model is
+                                     confident and grow when it is uncertain.
+                                     Recommended default under exchangeability.
+- `NaiveConformalPredictor`       -- Score = 1 - p(y_true). Simpler but produces
+                                     less adaptive sets; included for ablation.
+- `WeightedAPSConformalPredictor` -- APS with importance weights from a
+                                     likelihood-ratio estimator (Tibshirani,
+                                     Foygel Barber, Candes & Ramdas 2019).
+                                     Recovers marginal coverage under
+                                     covariate shift -- e.g. cross-subject EEG.
 
 The user-facing intent: when |set| > 1, the BrainPolicy treats the prediction
 as "uncertain" and holds the previous action -- a hard guardrail that complements
@@ -130,6 +135,130 @@ class APSConformalPredictor:
 
     def empirical_coverage(self, probs: np.ndarray, y_true: np.ndarray) -> float:
         """Fraction of test points whose set contains the true label."""
+        sets = self.predict_set(probs)
+        y_true = np.asarray(y_true).astype(int)
+        return float(np.mean([yi in s for yi, s in zip(y_true, sets)]))
+
+    def average_set_size(self, probs: np.ndarray) -> float:
+        sets = self.predict_set(probs)
+        return float(np.mean([len(s) for s in sets]))
+
+
+def _weighted_quantile(values: np.ndarray, weights: np.ndarray, level: float) -> float:
+    """Smallest value `q` with `cumulative_weight({v_i <= q}) / total_weight >= level`.
+
+    Used by weighted conformal prediction (Tibshirani et al. 2019). Equivalent
+    to the unweighted empirical quantile when all weights are equal.
+    """
+    values = np.asarray(values)
+    weights = np.asarray(weights)
+    if values.shape != weights.shape:
+        raise ValueError("values and weights must have the same shape")
+    if not np.all(weights >= 0):
+        raise ValueError("weights must be non-negative")
+
+    order = np.argsort(values)
+    v_sorted = values[order]
+    w_sorted = weights[order]
+    cw = np.cumsum(w_sorted)
+    total = cw[-1] if len(cw) else 0.0
+    if total <= 0:
+        raise ValueError("weights sum to zero -- cannot compute quantile")
+    cw_normalized = cw / total
+    idx = np.searchsorted(cw_normalized, level, side="left")
+    idx = min(idx, len(v_sorted) - 1)
+    return float(v_sorted[idx])
+
+
+class WeightedAPSConformalPredictor:
+    """APS conformal predictor with importance weights for covariate shift.
+
+    Implements the weighted-conformal recipe of Tibshirani, Foygel Barber,
+    Candes & Ramdas (2019, *Conformal Prediction Under Covariate Shift*). The
+    APS calibration scores are weighted by an importance ratio
+    ``w(x) = P_test(x) / P_calib(x)`` before computing the conformal quantile.
+
+    Coverage guarantee: if `P_test(Y | X) = P_calib(Y | X)` (only the marginal
+    P(X) shifts) and the weights are correct, marginal coverage `>= 1 - alpha`
+    is restored. With estimated weights, the guarantee becomes approximate
+    -- expect coverage close to `1 - alpha` when the likelihood-ratio
+    estimator is accurate, and a residual gap proportional to weight
+    misspecification otherwise.
+
+    The fit signature differs from `APSConformalPredictor`:
+        cp.fit(probs_calib, y_calib, weights_calib)
+
+    Use `inference.domain_weights.estimate_likelihood_ratio` to obtain
+    `weights_calib` from raw features `(X_calib, X_test)`.
+    """
+
+    def __init__(self, alpha: float = 0.1):
+        if not 0.0 < alpha < 1.0:
+            raise ValueError(f"alpha must be in (0, 1), got {alpha}")
+        self.alpha = alpha
+        self.q_hat: float | None = None
+        self.weights: np.ndarray | None = None
+        self.n_classes_: int | None = None
+
+    def fit(
+        self,
+        probs_calib: np.ndarray,
+        y_calib: np.ndarray,
+        weights_calib: np.ndarray,
+    ) -> "WeightedAPSConformalPredictor":
+        """Compute the weighted conformal quantile.
+
+        For weighted conformal, the calibration target level is computed from
+        the per-point weights so that, if the true likelihood ratio were used,
+        the resulting prediction sets would have marginal coverage >= 1 - alpha
+        on test inputs (Tibshirani et al. 2019, Theorem 1).
+
+        Args:
+            probs_calib: Class probabilities on the calibration set,
+                         shape (n, n_classes).
+            y_calib:     Integer labels for the calibration set, shape (n,).
+            weights_calib: Likelihood-ratio weights, shape (n,). Must be
+                           non-negative and not all zero.
+        """
+        probs_calib = np.asarray(probs_calib)
+        y_calib = np.asarray(y_calib).astype(int)
+        weights_calib = np.asarray(weights_calib).astype(float)
+        if weights_calib.shape != y_calib.shape:
+            raise ValueError("weights_calib must align with y_calib")
+
+        scores = _aps_score_calib(probs_calib, y_calib)
+
+        # Tibshirani et al. 2019 use the (n+1)-st point in the weighted
+        # quantile to remain valid in finite samples. We approximate by
+        # appending a placeholder weight equal to the mean weight, matching
+        # the recommendation in Angelopoulos & Bates 2023, Sec. 2.3.
+        n = len(scores)
+        mean_w = float(weights_calib.mean()) if n > 0 else 1.0
+        scores_aug = np.concatenate([scores, [np.inf]])
+        weights_aug = np.concatenate([weights_calib, [mean_w]])
+
+        self.q_hat = _weighted_quantile(scores_aug, weights_aug, 1 - self.alpha)
+        self.weights = weights_calib.copy()
+        self.n_classes_ = probs_calib.shape[1]
+        return self
+
+    def predict_set(self, probs: np.ndarray) -> list[set[int]]:
+        if self.q_hat is None:
+            raise RuntimeError(
+                "WeightedAPSConformalPredictor.fit() must be called first."
+            )
+        probs = np.asarray(probs)
+        if probs.ndim == 1:
+            probs = probs[None, :]
+        order, cumsum = _aps_score_test(probs)
+        sets: list[set[int]] = []
+        for i in range(probs.shape[0]):
+            mask = cumsum[i] <= self.q_hat
+            mask[0] = True  # never empty
+            sets.append(set(order[i, mask].tolist()))
+        return sets
+
+    def empirical_coverage(self, probs: np.ndarray, y_true: np.ndarray) -> float:
         sets = self.predict_set(probs)
         y_true = np.asarray(y_true).astype(int)
         return float(np.mean([yi in s for yi, s in zip(y_true, sets)]))

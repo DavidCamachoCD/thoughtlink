@@ -77,6 +77,31 @@ DOI/arXiv, what we take from it, and the file(s) where it is implemented.
   score in our conformal layer.
 - **Where:** [`src/thoughtlink/inference/conformal.py`](../src/thoughtlink/inference/conformal.py) — `APSConformalPredictor` (`_aps_score_calib`, `_aps_score_test`, `predict_set`).
 
+### [Tibshirani, Foygel Barber, Candès & Ramdas 2019] Conformal Prediction Under Covariate Shift
+- **Venue:** NeurIPS 2019.
+- **arXiv:** [1904.06019](https://arxiv.org/abs/1904.06019)
+- **What we take:** **Weighted conformal prediction**. When the test distribution
+  P_test(X) differs from the calibration distribution P_calib(X) (e.g., a new
+  EEG subject), the unweighted conformal quantile under-covers. Weighting
+  calibration scores by an estimated likelihood ratio
+  `w(x) = P_test(x) / P_calib(x)` recovers marginal coverage `>= 1 - alpha`,
+  provided `P_test(Y | X) = P_calib(Y | X)` and the weights are accurate.
+  We follow Theorem 1: weighted empirical quantile of the augmented score
+  vector `(s_1, ..., s_n, +inf)` with weights `(w_1, ..., w_n, mean(w))`.
+- **Where:** [`src/thoughtlink/inference/conformal.py`](../src/thoughtlink/inference/conformal.py) -- `WeightedAPSConformalPredictor`,
+  `_weighted_quantile`. The likelihood ratio is estimated by a binary
+  logistic regression on `(X_calib, X_test)` in
+  [`src/thoughtlink/inference/domain_weights.py`](../src/thoughtlink/inference/domain_weights.py).
+
+### [Sugiyama, Suzuki, Nakajima, Kashima, von Bünau & Kawanabe 2008] Direct Importance Estimation for Covariate Shift Adaptation
+- **Venue:** *Annals of the Institute of Statistical Mathematics*, 60, pp. 699-746.
+- **What we take:** Theoretical justification for **importance clipping** as
+  a bias-variance tradeoff control under covariate shift. With heavy shift the
+  raw likelihood ratio has unbounded variance; clipping bounds the influence
+  of any one calibration point at the cost of a small bias.
+- **Where:** [`src/thoughtlink/inference/domain_weights.py`](../src/thoughtlink/inference/domain_weights.py) --
+  `clip` argument of `estimate_likelihood_ratio`.
+
 ### [Angelopoulos & Bates 2023] A Gentle Introduction to Conformal Prediction and Distribution-Free Uncertainty Quantification
 - **Venue:** *Foundations and Trends in Machine Learning*, vol. 16, no. 4.
 - **arXiv:** [2107.07511](https://arxiv.org/abs/2107.07511)

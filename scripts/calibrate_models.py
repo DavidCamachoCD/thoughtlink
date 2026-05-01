@@ -36,7 +36,14 @@ from thoughtlink.inference.calibration import (
     SklearnCalibrator,
     TemperatureScaler,
 )
-from thoughtlink.inference.conformal import APSConformalPredictor
+from thoughtlink.inference.conformal import (
+    APSConformalPredictor,
+    WeightedAPSConformalPredictor,
+)
+from thoughtlink.inference.domain_weights import (
+    diagnose_weights,
+    estimate_likelihood_ratio,
+)
 from thoughtlink.inference.diagnostics import (
     brier_score,
     expected_calibration_error,
@@ -74,20 +81,48 @@ def _fit_conformal_and_report(
     probs_test: np.ndarray,
     y_test: np.ndarray,
     alpha: float,
-) -> tuple[APSConformalPredictor, dict]:
+    *,
+    X_calib: np.ndarray | None = None,
+    X_test: np.ndarray | None = None,
+    fit_weighted: bool = False,
+) -> tuple[APSConformalPredictor, WeightedAPSConformalPredictor | None, dict]:
     cp = APSConformalPredictor(alpha=alpha).fit(probs_calib, y_calib)
     coverage = cp.empirical_coverage(probs_test, y_test)
     avg_size = cp.average_set_size(probs_test)
     print(
-        f"  Conformal (alpha={alpha:.2f})  coverage={coverage:.3f}  "
+        f"  Conformal (alpha={alpha:.2f})           coverage={coverage:.3f}  "
         f"avg_set_size={avg_size:.2f}  q_hat={cp.q_hat:.4f}"
     )
-    return cp, {
+    out = {
         "alpha": alpha,
         "q_hat": cp.q_hat,
         "empirical_coverage": coverage,
         "avg_set_size": avg_size,
     }
+
+    weighted_cp: WeightedAPSConformalPredictor | None = None
+    if fit_weighted:
+        if X_calib is None or X_test is None:
+            raise ValueError("fit_weighted=True requires X_calib and X_test")
+        weights = estimate_likelihood_ratio(X_calib, X_test)
+        wdiag = diagnose_weights(weights)
+        weighted_cp = WeightedAPSConformalPredictor(alpha=alpha).fit(
+            probs_calib, y_calib, weights
+        )
+        wcov = weighted_cp.empirical_coverage(probs_test, y_test)
+        wavg = weighted_cp.average_set_size(probs_test)
+        print(
+            f"  Weighted conformal (alpha={alpha:.2f})  coverage={wcov:.3f}  "
+            f"avg_set_size={wavg:.2f}  q_hat={weighted_cp.q_hat:.4f}  "
+            f"ESS={wdiag['ess_ratio']:.2f}"
+        )
+        out["weighted"] = {
+            "q_hat": weighted_cp.q_hat,
+            "empirical_coverage": wcov,
+            "avg_set_size": wavg,
+            "weight_stats": wdiag,
+        }
+    return cp, weighted_cp, out
 
 
 def main() -> None:
@@ -110,6 +145,12 @@ def main() -> None:
         default=1,
         help="Number of held-out calibration subjects (default 1; try 2 if the "
              "calibration set is too small for isotonic to be stable).",
+    )
+    parser.add_argument(
+        "--weighted",
+        action="store_true",
+        help="Also fit a weighted-conformal predictor (Tibshirani et al. 2019) "
+             "to recover marginal coverage under cross-subject covariate shift.",
     )
     args = parser.parse_args()
 
@@ -183,14 +224,19 @@ def main() -> None:
         _print_diag("Post (test)", diag_post)
 
         probs_calib_post = cal.predict_proba(X_calib)
-        cp, conf_report = _fit_conformal_and_report(
-            "best_baseline", probs_calib_post, y_calib, probs_test_post, y_test, alpha
+        cp, weighted_cp, conf_report = _fit_conformal_and_report(
+            "best_baseline",
+            probs_calib_post, y_calib, probs_test_post, y_test, alpha,
+            X_calib=X_calib, X_test=X_test, fit_weighted=args.weighted,
         )
 
         with open(RESULTS_DIR / "best_baseline_calibrated.pkl", "wb") as f:
             pickle.dump(cal, f)
         with open(RESULTS_DIR / "best_baseline_conformal.pkl", "wb") as f:
             pickle.dump(cp, f)
+        if weighted_cp is not None:
+            with open(RESULTS_DIR / "best_baseline_conformal_weighted.pkl", "wb") as f:
+                pickle.dump(weighted_cp, f)
 
         report["models"]["best_baseline"] = {
             "pre": diag_pre,
@@ -219,14 +265,19 @@ def main() -> None:
         _print_diag("Post (test)", diag_post)
 
         probs_calib_post = cal.predict_proba(X_calib)
-        cp, conf_report = _fit_conformal_and_report(
-            "hierarchical", probs_calib_post, y_calib, probs_test_post, y_test, alpha
+        cp, weighted_cp, conf_report = _fit_conformal_and_report(
+            "hierarchical",
+            probs_calib_post, y_calib, probs_test_post, y_test, alpha,
+            X_calib=X_calib, X_test=X_test, fit_weighted=args.weighted,
         )
 
         with open(RESULTS_DIR / "hierarchical_calibrated.pkl", "wb") as f:
             pickle.dump(cal, f)
         with open(RESULTS_DIR / "hierarchical_conformal.pkl", "wb") as f:
             pickle.dump(cp, f)
+        if weighted_cp is not None:
+            with open(RESULTS_DIR / "hierarchical_conformal_weighted.pkl", "wb") as f:
+                pickle.dump(weighted_cp, f)
 
         report["models"]["hierarchical"] = {
             "pre": diag_pre,
@@ -277,14 +328,23 @@ def main() -> None:
             _print_diag("Post (test)", diag_post)
 
             probs_calib_post = scaler.predict_proba(logits_calib)
-            cp, conf_report = _fit_conformal_and_report(
-                "cnn", probs_calib_post, y_calib, probs_test_post, y_test, alpha
+            # The likelihood ratio P_test(x) / P_calib(x) is invariant to the
+            # choice of representation (Jacobian cancels), so we can reuse the
+            # 66-dim features for the CNN's weights -- they carry the same
+            # subject-discriminative information as the raw windows.
+            cp, weighted_cp, conf_report = _fit_conformal_and_report(
+                "cnn",
+                probs_calib_post, y_calib, probs_test_post, y_test, alpha,
+                X_calib=X_calib, X_test=X_test, fit_weighted=args.weighted,
             )
 
             with open(RESULTS_DIR / "cnn_calibrated.pkl", "wb") as f:
                 pickle.dump({"temperature": scaler.T, "scaler": scaler}, f)
             with open(RESULTS_DIR / "cnn_conformal.pkl", "wb") as f:
                 pickle.dump(cp, f)
+            if weighted_cp is not None:
+                with open(RESULTS_DIR / "cnn_conformal_weighted.pkl", "wb") as f:
+                    pickle.dump(weighted_cp, f)
 
             report["models"]["cnn"] = {
                 "temperature": scaler.T,
