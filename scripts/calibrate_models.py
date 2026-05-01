@@ -17,6 +17,7 @@ References:
   See `docs/references.md`.
 """
 
+import argparse
 import json
 import pickle
 import sys
@@ -90,6 +91,28 @@ def _fit_conformal_and_report(
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description="Calibration + conformal pipeline.")
+    parser.add_argument(
+        "--method",
+        choices=["isotonic", "sigmoid"],
+        default=None,
+        help="Sklearn calibration method (overrides configs/default.yaml).",
+    )
+    parser.add_argument(
+        "--alpha",
+        type=float,
+        default=None,
+        help="Conformal coverage level (overrides configs/default.yaml).",
+    )
+    parser.add_argument(
+        "--n-calib-subjects",
+        type=int,
+        default=1,
+        help="Number of held-out calibration subjects (default 1; try 2 if the "
+             "calibration set is too small for isotonic to be stable).",
+    )
+    args = parser.parse_args()
+
     print("=" * 70)
     print("ThoughtLink - Calibration + Conformal Pipeline")
     print("=" * 70)
@@ -100,17 +123,20 @@ def main() -> None:
     cal_cfg = config.get("calibration", {})
     conf_cfg = config.get("conformal", {})
     split_cfg = config["data"].get("split_3way", {})
-    sklearn_method = cal_cfg.get("sklearn_method", "isotonic")
-    alpha = conf_cfg.get("alpha", 0.1)
+    sklearn_method = args.method or cal_cfg.get("sklearn_method", "isotonic")
+    alpha = args.alpha if args.alpha is not None else conf_cfg.get("alpha", 0.1)
+    print(f"Method: {sklearn_method}    alpha={alpha}    "
+          f"calibration subjects={args.n_calib_subjects}")
 
     # 1. Load + 3-way subject-aware split.
     print("\n[1/4] Loading dataset...")
     samples = load_all()
 
     print("\n[2/4] Splitting (subject-aware) train / calib / test...")
+    n_subjects = len({s["subject_id"] for s in samples})
     train_samples, calib_samples, test_samples = split_by_subject_3way(
         samples,
-        calib_size=split_cfg.get("calib_size", 1 / 17),
+        calib_size=args.n_calib_subjects / n_subjects,
         test_size=split_cfg.get("test_size", 3 / 17),
     )
 
@@ -224,10 +250,15 @@ def main() -> None:
             from thoughtlink.models.cnn import EEGNet
 
             print(f"\n--- CNN ({cnn_path.name}) ---")
+            # Match `scripts/train_cnn.py` -- it uses f1=16, f2=32, d=2.
             cnn = EEGNet(
                 n_classes=len(CLASS_NAMES),
                 n_channels=X_calib_windows.shape[2],
                 n_samples=X_calib_windows.shape[1],
+                f1=16,
+                f2=32,
+                d=2,
+                dropout=0.3,
             )
             cnn.load_state_dict(torch.load(cnn_path, map_location="cpu", weights_only=True))
             cnn.eval()

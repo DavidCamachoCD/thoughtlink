@@ -60,11 +60,13 @@ inference:
   prediction_hz: 2.0
 
 # Post-hoc confidence calibration (Platt 1999 / Zadrozny & Elkan 2002 / Guo et al. 2017).
-# Default isotonic for sklearn models -- with ~80 calibration samples per subject
-# this is on the boundary; sigmoid is the safer choice if calib accuracy regresses.
+# Default sigmoid (Platt) since our calibration set is small (~1 subject =
+# ~700 windows) and Niculescu-Mizil & Caruana 2005 show isotonic only beats
+# sigmoid past ~1k calibration examples. CNN/temporal models use temperature
+# scaling regardless (Guo et al. 2017).
 calibration:
   enabled: true
-  sklearn_method: "isotonic"   # or "sigmoid" (Platt scaling)
+  sklearn_method: "sigmoid"    # or "isotonic" (use only if calib > 1k samples)
 
 # Split-conformal prediction (Vovk 2005; Romano et al. 2020). Provides a
 # distribution-free coverage guarantee >= 1 - alpha. When the prediction set
