@@ -91,15 +91,21 @@ class TemporalEEGNet(nn.Module):
         out = self.dropout(last_hidden)
         return self.fc(out)
 
-    def predict_proba_numpy(self, sequences: np.ndarray) -> np.ndarray:
+    def predict_proba_numpy(
+        self,
+        sequences: np.ndarray,
+        return_logits: bool = False,
+    ) -> np.ndarray:
         """Inference from numpy arrays.
 
         Args:
             sequences: (n_sequences, seq_len, n_features) or
                        (seq_len, n_features) for a single sequence.
+            return_logits: If True, return raw pre-softmax logits instead of
+                probabilities. Required by temperature scaling (Guo et al. 2017).
 
         Returns:
-            Probability matrix (n_sequences, n_classes).
+            Probability matrix or logits, shape (n_sequences, n_classes).
         """
         self.eval()
         with torch.no_grad():
@@ -107,5 +113,6 @@ class TemporalEEGNet(nn.Module):
                 sequences = sequences[np.newaxis]
             x = torch.from_numpy(sequences).float()
             logits = self.forward(x)
-            probs = F.softmax(logits, dim=1).numpy()
-        return probs
+            if return_logits:
+                return logits.numpy()
+            return F.softmax(logits, dim=1).numpy()

@@ -84,15 +84,21 @@ class EEGNet(nn.Module):
         x = self._forward_features(x)
         return self.fc(x)
 
-    def predict_proba_numpy(self, windows: "np.ndarray") -> "np.ndarray":
+    def predict_proba_numpy(
+        self,
+        windows: "np.ndarray",
+        return_logits: bool = False,
+    ) -> "np.ndarray":
         """Convenience method for inference from numpy arrays.
 
         Args:
             windows: Shape (n_windows, n_channels, n_samples) or
                      (n_windows, n_samples, n_channels).
+            return_logits: If True, return raw pre-softmax logits instead of
+                probabilities. Required by temperature scaling (Guo et al. 2017).
 
         Returns:
-            Probability matrix (n_windows, n_classes).
+            Probability matrix or logits, shape (n_windows, n_classes).
         """
         import numpy as np
 
@@ -105,5 +111,6 @@ class EEGNet(nn.Module):
                 windows = np.transpose(windows, (0, 2, 1))
             x = torch.from_numpy(windows).float().unsqueeze(1)
             logits = self.forward(x)
-            probs = F.softmax(logits, dim=1).numpy()
-        return probs
+            if return_logits:
+                return logits.numpy()
+            return F.softmax(logits, dim=1).numpy()

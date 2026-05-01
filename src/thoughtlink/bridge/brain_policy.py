@@ -46,12 +46,23 @@ class BrainPolicy:
         model,
         config: dict,
         on_step: Callable[[StepResult], None] | None = None,
+        calibrator=None,
+        conformal=None,
     ):
         """
         Args:
             model: Trained classifier with predict_proba(X).
             config: Full config dict (from configs/default.yaml).
             on_step: Optional callback invoked on each prediction step.
+            calibrator: Optional calibrator (SklearnCalibrator / HierarchicalCalibrator)
+                wrapping `model`. If supplied, it is used as the model passed to
+                the decoder so its calibrated probabilities flow through the rest
+                of the pipeline transparently.
+            conformal: Optional fitted conformal predictor (APSConformalPredictor).
+                When supplied and the prediction set has >1 class, the stability
+                pipeline receives a uniform-probability vector (encoding
+                "uncertain") so the current action is held -- this is the hard
+                guardrail layer.
         """
         eeg_cfg = config["preprocessing"]["eeg"]
         inf_cfg = config["inference"]
@@ -60,8 +71,11 @@ class BrainPolicy:
         self.prediction_hz = inf_cfg["prediction_hz"]
         self.config = config
 
+        # If a calibrator is supplied, route the decoder through it so all
+        # downstream consumers see calibrated probabilities.
+        decoder_model = calibrator if calibrator is not None else model
         self.decoder = RealtimeDecoder(
-            model=model,
+            model=decoder_model,
             feature_extractor=lambda w: extract_window_features(
                 w, sfreq=self.sfreq
             ),
@@ -76,7 +90,25 @@ class BrainPolicy:
             smoother_window=inf_cfg["smoother_window"],
         )
 
+        self.calibrator = calibrator
+        self.conformal = conformal
         self.on_step = on_step
+
+    def _apply_conformal_guardrail(self, probs: np.ndarray) -> np.ndarray:
+        """If the conformal prediction set has >1 class, replace probs with a
+        uniform vector so the stability filter holds the current action.
+
+        Returns the probability vector that should be fed to `StabilityPipeline`.
+        """
+        if self.conformal is None:
+            return probs
+        sets = self.conformal.predict_set(probs[None, :])
+        if len(sets[0]) <= 1:
+            return probs
+        # Uncertain: emit uniform probas. The confidence threshold (>= 0.6)
+        # will reject this and the filter will keep current_action.
+        n = probs.shape[0]
+        return np.full(n, 1.0 / n)
 
     def run_on_file(self, npz_path: str | Path) -> list[StepResult]:
         """Simulate real-time streaming from a single .npz file.
@@ -121,7 +153,8 @@ class BrainPolicy:
         raw_idx = int(np.argmax(probs))
         raw_intent = CLASS_NAMES[raw_idx]
 
-        stable_intent = self.stability.process(probs, CLASS_NAMES)
+        gated_probs = self._apply_conformal_guardrail(probs)
+        stable_intent = self.stability.process(gated_probs, CLASS_NAMES)
         action = intent_to_action_name(stable_intent)
 
         return StepResult(
@@ -166,7 +199,8 @@ class BrainPolicy:
             raw_idx = int(np.argmax(probs))
             raw_intent = CLASS_NAMES[raw_idx]
 
-            stable_intent = self.stability.process(probs, CLASS_NAMES)
+            gated_probs = self._apply_conformal_guardrail(probs)
+            stable_intent = self.stability.process(gated_probs, CLASS_NAMES)
             action = intent_to_action_name(stable_intent)
 
             result = StepResult(

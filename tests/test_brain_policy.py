@@ -84,3 +84,39 @@ class TestBrainPolicy:
         eeg = np.random.randn(1500, 6)
         results = policy.run_on_array(eeg)
         assert len(results_captured) == len(results)
+
+    def test_conformal_uncertain_set_holds_action(self, config):
+        """If the conformal predictor returns a set of >1 class, the stability
+        pipeline must receive a uniform vector and keep the default action."""
+
+        class _UncertainConformal:
+            def predict_set(self, probs):
+                # Always return an uncertain set with multiple classes.
+                return [{0, 1, 2}]
+
+        policy = BrainPolicy(
+            model=_DummyModel(),
+            config=config,
+            conformal=_UncertainConformal(),
+        )
+        # Even though _DummyModel reports 0.8 for "Right Fist", the uncertain
+        # conformal set should force the stability filter to hold "Relax".
+        probs = np.array([0.8, 0.05, 0.05, 0.05, 0.05])
+        result = policy.step(probs)
+        assert result.stable_intent == "Relax"
+        assert result.action == "STOP"
+
+    def test_calibrator_used_as_decoder_model(self, config):
+        """When a calibrator is supplied, the decoder routes through it."""
+
+        class _CalibratorWrap:
+            def __init__(self, base):
+                self._base = base
+
+            def predict_proba(self, X):
+                return self._base.predict_proba(X)
+
+        base = _DummyModel()
+        wrapped = _CalibratorWrap(base)
+        policy = BrainPolicy(model=base, config=config, calibrator=wrapped)
+        assert policy.decoder.model is wrapped
