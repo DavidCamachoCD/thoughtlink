@@ -43,6 +43,11 @@ versioned according to [Semantic Versioning](https://semver.org/spec/v2.0.0.html
 - Deduplicated npz files in loader to prevent double-counting
 - Handle NaN sensor dropouts in EEG preprocessing
 
+### Notes
+- Notebooks 02/04/05 re-executed with the full 17-subject dataset (1395 samples,
+  14 train / 3 test subjects) after the loader deduplication and NaN-handling fixes.
+- Final test suite: 212 tests across 18 files, all passing.
+
 ---
 
 ## [0.4.0] - 2026-02-07

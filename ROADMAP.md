@@ -109,7 +109,7 @@ thoughtlink/
 |----------|-------|
 | Source | `huggingface.co/datasets/KernelCo/robot_control` |
 | Format | .npz, 15-second chunks |
-| Count | ~900 files |
+| Count | 1395 files (17 subjects, ~82 chunks/subject) |
 | EEG | 6 channels (AFF6, AFp2, AFp1, AFF5, FCz, CPz), 500 Hz, (7499, 6) |
 | TD-NIRS | 40 modules, 4.76 Hz, (72, 40, 3, 2, 3) |
 | Classes | Right Fist, Left Fist, Both Fists, Tongue Tapping, Relax |

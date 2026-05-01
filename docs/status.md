@@ -1,6 +1,6 @@
 # ThoughtLink — Development Status
 
-Last updated: **2026-02-08**
+Last updated: **2026-05-01**
 
 ---
 
@@ -179,13 +179,25 @@ The full loop is now closed: brain signals -> decode -> stabilize -> action -> U
 
 | File | Tests | Status |
 |---|---|---|
-| `tests/test_preprocessing.py` | 10 | Passing |
-| `tests/test_features.py` | 11 | Passing |
-| `tests/test_inference.py` | 9 | Passing |
+| `tests/test_brain_policy.py` | 5 | Passing |
 | `tests/test_bridge.py` | 29 | Passing |
+| `tests/test_bridge_intent.py` | 8 | Passing |
+| `tests/test_csp.py` | 5 | Passing |
+| `tests/test_data_loader.py` | 9 | Passing |
+| `tests/test_data_splitter.py` | 9 | Passing |
+| `tests/test_dataset.py` | 8 | Passing |
+| `tests/test_decoder.py` | 7 | Passing |
+| `tests/test_features.py` | 43 | Passing |
+| `tests/test_inference.py` | 10 | Passing |
+| `tests/test_integration.py` | 5 | Passing |
+| `tests/test_models_baseline.py` | 6 | Passing |
+| `tests/test_models_cnn.py` | 8 | Passing |
+| `tests/test_models_hierarchical.py` | 18 | Passing |
+| `tests/test_nirs_features.py` | 9 | Passing |
+| `tests/test_normalization.py` | 5 | Passing |
+| `tests/test_preprocessing.py` | 16 | Passing |
 | `tests/test_temporal.py` | 12 | Passing |
-| `tests/test_dataset.py` | 9 | Passing |
-| **Total** | **80** | **All passing** |
+| **Total** | **212** | **All passing** |
 
 ### Notebooks
 
