@@ -44,7 +44,7 @@ from thoughtlink.inference.domain_weights import (
     diagnose_weights,
     estimate_likelihood_ratio,
 )
-from thoughtlink.inference.diagnostics import (
+from thoughtlink.eval.diagnostics import (
     brier_score,
     expected_calibration_error,
     maximum_calibration_error,

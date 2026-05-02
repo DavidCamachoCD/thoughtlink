@@ -10,7 +10,7 @@ from thoughtlink.inference.calibration import (
     SklearnCalibrator,
     TemperatureScaler,
 )
-from thoughtlink.inference.diagnostics import expected_calibration_error
+from thoughtlink.eval.diagnostics import expected_calibration_error
 from thoughtlink.models.hierarchical import HierarchicalClassifier
 
 

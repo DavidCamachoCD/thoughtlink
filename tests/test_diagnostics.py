@@ -3,7 +3,7 @@
 import numpy as np
 import pytest
 
-from thoughtlink.inference.diagnostics import (
+from thoughtlink.eval.diagnostics import (
     brier_score,
     expected_calibration_error,
     maximum_calibration_error,
