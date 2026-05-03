@@ -21,6 +21,7 @@ from thoughtlink.preprocessing.eeg import preprocess_all
 from thoughtlink.preprocessing.windowing import windows_from_samples
 from thoughtlink.preprocessing.alignment import euclidean_align
 from thoughtlink.preprocessing.augmentation import EEGAugmentationDataset
+from thoughtlink.eval._torch_device import select_device
 from thoughtlink.models.cnn import EEGNet
 
 
@@ -125,7 +126,7 @@ def main():
     batch_size = 64
     lr = 1e-3
     weight_decay = 1e-4
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = select_device()
     print(f"Device: {device}")
 
     output_dir = Path("results")

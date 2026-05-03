@@ -23,6 +23,7 @@ import torch.optim as optim
 from sklearn.metrics import accuracy_score, cohen_kappa_score
 from torch.utils.data import DataLoader, TensorDataset
 
+from thoughtlink.eval._torch_device import select_device
 from thoughtlink.models.baseline import build_baselines, evaluate_model
 from thoughtlink.models.cnn import EEGNet
 from thoughtlink.models.hierarchical import RELAX_IDX, HierarchicalClassifier
@@ -159,7 +160,8 @@ def train_cnn(
     if config.use_alignment:
         X_train_windows = euclidean_align(X_train_windows, train_subj_ids)
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = select_device()
+    print(f"[CNN] device={device.type}")
     train_loader = _prepare_cnn_loader(
         X_train_windows, y_train, batch_size=config.batch_size, augment=True
     )
