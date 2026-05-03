@@ -26,10 +26,10 @@ import math
 import re
 import sys
 from collections import defaultdict
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 from statistics import mean, pstdev
-from typing import Callable
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_RESULTS_DIR = REPO_ROOT / "results"

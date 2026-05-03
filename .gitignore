@@ -35,8 +35,13 @@ data/raw/
 data/processed/
 *.npz
 
-# Trained models & results (large, reproducible)
-results/
+# Trained models (large binaries, reproducible from scripts/train_*.py).
+# We DO track results/*.png, *.json, ablations/*/{summary.csv,cells.jsonl,config.json}
+# so docs/results.md renders on GitHub.
+results/*.pkl
+results/*.pt
+results/*.onnx
+results/*.onnx.data
 *.onnx
 *.pt
 *.pth

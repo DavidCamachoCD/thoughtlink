@@ -68,7 +68,7 @@ thoughtlink/
 │   ├── bridge/                 # Intent-to-action mapping, BrainPolicy, MuJoCo controller, orchestrator
 │   └── viz/                    # Streamlit dashboard, temporal stability, t-SNE/UMAP latent viz
 ├── scripts/                    # Training, benchmarking, ONNX export
-├── tests/                      # Unit tests (276 passing)
+├── tests/                      # Unit tests (283 passing)
 └── notebooks/                  # EDA, feature engineering, model comparison, wavelet analysis
 ```
 
@@ -166,7 +166,7 @@ Development continued post-hackathon as a personal research exploration.
 - [x] Feature engineering notebook with separability analysis
 - [x] Model comparison notebook with full metrics
 - [x] Wavelet analysis notebooks (DWT features + baseline comparison)
-- [x] 212 unit tests passing (grew to 276 in v1.1.0)
+- [x] 212 unit tests passing (grew to 283 in v1.1.0)
 
 ## Setup
 

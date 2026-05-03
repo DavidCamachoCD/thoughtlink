@@ -1,0 +1,77 @@
+{
+  "dataset": {
+    "total_samples": 900,
+    "train_samples": 810,
+    "test_samples": 90,
+    "train_windows": 12150,
+    "test_windows": 1350,
+    "n_features": 66,
+    "train_subjects": [
+      "2a456f03",
+      "37dfbd76",
+      "4c2ea012",
+      "a5136953",
+      "d696086d"
+    ],
+    "test_subjects": [
+      "1a3cd681"
+    ]
+  },
+  "models": {
+    "svm_linear": {
+      "accuracy": 0.24962962962962962,
+      "kappa": 0.062037037037037,
+      "f1_macro": 0.22412147806981036,
+      "f1_weighted": 0.2241214780698104,
+      "precision_macro": 0.24362325218336528,
+      "recall_macro": 0.2496296296296296,
+      "latency_ms": 0.22018749950802885,
+      "train_time_s": 63.46902799606323
+    },
+    "logreg": {
+      "accuracy": 0.22592592592592592,
+      "kappa": 0.03240740740740744,
+      "f1_macro": 0.20091508939544575,
+      "f1_weighted": 0.20091508939544578,
+      "precision_macro": 0.23765485121175792,
+      "recall_macro": 0.22592592592592595,
+      "latency_ms": 0.04887500108452514,
+      "train_time_s": 0.5193750858306885
+    },
+    "random_forest": {
+      "accuracy": 0.2088888888888889,
+      "kappa": 0.011111111111111072,
+      "f1_macro": 0.1969816280220628,
+      "f1_weighted": 0.19698162802206273,
+      "precision_macro": 0.20458353194126572,
+      "recall_macro": 0.2088888888888889,
+      "latency_ms": 3.169707999404636,
+      "train_time_s": 7.3841822147369385
+    },
+    "hierarchical": {
+      "accuracy": 0.20222222222222222,
+      "kappa": 0.002777777777777768,
+      "f1_macro": 0.18061328068056412,
+      "f1_weighted": 0.18061328068056412,
+      "precision_macro": 0.2237525505437732,
+      "recall_macro": 0.20222222222222222,
+      "latency_ms": 0.6674584983556997,
+      "train_time_s": 24.175034046173096
+    },
+    "svm_rbf": {
+      "accuracy": 0.18814814814814815,
+      "kappa": -0.014814814814814836,
+      "f1_macro": 0.19124583729173844,
+      "f1_weighted": 0.19124583729173844,
+      "precision_macro": 0.20438510489127076,
+      "recall_macro": 0.18814814814814815,
+      "latency_ms": 0.5092710016469937,
+      "train_time_s": 22.086743116378784
+    }
+  },
+  "hierarchical_details": {
+    "stage1_accuracy": 0.7866666666666666,
+    "false_trigger_rate": 0.5111111111111111,
+    "missed_active_rate": 0.5185185185185185
+  }
+}
