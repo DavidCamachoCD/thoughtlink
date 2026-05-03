@@ -68,7 +68,7 @@ thoughtlink/
 │   ├── bridge/                 # Intent-to-action mapping, BrainPolicy, MuJoCo controller, orchestrator
 │   └── viz/                    # Streamlit dashboard, temporal stability, t-SNE/UMAP latent viz
 ├── scripts/                    # Training, benchmarking, ONNX export
-├── tests/                      # Unit tests (212 passing)
+├── tests/                      # Unit tests (276 passing)
 └── notebooks/                  # EDA, feature engineering, model comparison, wavelet analysis
 ```
 
@@ -102,6 +102,25 @@ distribution-free statistical guarantee:
 
 Full motivation, architecture and empirical results (96-cell ablation):
 **[`docs/research/guardrails.md`](docs/research/guardrails.md)**.
+
+For an index of every empirical result in the repo (baselines, wavelet study,
+CNN, calibration + the full ablation matrix) with thumbnails and pointers
+to the canonical JSON / CSV files, see
+**[`docs/results.md`](docs/results.md)**. Tables there are auto-regenerated
+from the canonical artifacts via `scripts/build_results_doc.py`.
+
+## Scope
+
+This project was **originally planned for the Global AI Hackathon** (Feb 7–8,
+2026, Challenge #9), but was **not submitted** within the hackathon window.
+Development continued post-hackathon as a personal research exploration.
+
+- `v0.1.0` – `v1.0.0` is the pipeline that was built around the hackathon
+  timeframe (preprocessing, baselines, hierarchical, EEGNet, MuJoCo demo).
+- `v1.1.0+` is post-hackathon research work: the SOTA guardrails layer
+  (calibration + conformal prediction), the factorial ablation harness in
+  `src/thoughtlink/eval/`, MPS support for Apple Silicon, and the results
+  index in `docs/results.md`.
 
 ## Progress
 
@@ -147,7 +166,7 @@ Full motivation, architecture and empirical results (96-cell ablation):
 - [x] Feature engineering notebook with separability analysis
 - [x] Model comparison notebook with full metrics
 - [x] Wavelet analysis notebooks (DWT features + baseline comparison)
-- [x] 212 unit tests passing
+- [x] 212 unit tests passing (grew to 276 in v1.1.0)
 
 ## Setup
 
