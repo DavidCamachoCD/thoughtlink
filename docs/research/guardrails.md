@@ -83,10 +83,13 @@ cobertura conformal en lugar de un dial empírico.
                                          └───────────────────────┘
 ```
 
-Punto de inyección en runtime:
-[`bridge/brain_policy.py:162-174`](../../src/thoughtlink/bridge/brain_policy.py#L162-L174)
-— entre `decoder.predict()` y `stability.process()`. Backward compatible: sin
-calibrator/conformal, el comportamiento es idéntico al de v1.0.
+Punto de inyección en runtime: el método
+[`_apply_conformal_guardrail`](../../src/thoughtlink/bridge/brain_policy.py#L97)
+se llama justo antes de `stability.process()` en
+[`step()`](../../src/thoughtlink/bridge/brain_policy.py#L156-L157) y
+[`_stream_eeg()`](../../src/thoughtlink/bridge/brain_policy.py#L195-L203).
+Backward compatible: sin calibrator/conformal el comportamiento es idéntico al
+de v1.0.
 
 **Datos**: split subject-aware 3-way (13 train / 1 calib / 3 test) vía
 [`split_by_subject_3way`](../../src/thoughtlink/data/splitter.py). El sujeto de
@@ -331,8 +334,9 @@ def select_device() -> torch.device:
 ```
 
 Cero cambios al loop de entrenamiento ni a los hyperparams. El CNN entrena en
-MPS, pero el state_dict se persiste en CPU (línea ~226 de `train_cnn`), por lo
-que la calibración, conformal y persistencia downstream no notan diferencia.
+MPS, pero el state_dict se persiste en CPU (`model.cpu()` al final de
+[`train_cnn`](../../src/thoughtlink/eval/training.py#L231)), por lo que la
+calibración, conformal y persistencia downstream no notan diferencia.
 
 `TemperatureScaler` queda en CPU intencionalmente — LBFGS no acelera en MPS y
 ya convertía a CPU internamente.

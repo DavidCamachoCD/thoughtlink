@@ -115,15 +115,19 @@ y `notebooks/07_ablation_comparison.ipynb`.
 ### Tests
 
 - `tests/test_calibration.py`: 9 tests para los 3 calibradores. (08290f4)
-- `tests/test_conformal.py`: 14 tests, 3 predictores conformal +
+- `tests/test_conformal.py`: 15 tests, 3 predictores conformal +
   `_weighted_quantile`. (08290f4 + bae9748)
-- `tests/test_diagnostics.py`: 12 tests. (08290f4)
+- `tests/test_diagnostics.py`: 10 tests. (08290f4)
 - `tests/test_domain_weights.py`: 7 tests para likelihood-ratio estimator.
   (bae9748)
 - `tests/test_ablation.py`: 13 tests para registries + persistencia +
   resumability. (1f3c254)
 - `tests/test_torch_device.py`: 4 tests, smoke MPS sobre EEGNet. (b238320)
-- Total: 276 tests (212 originales + 64 nuevos), 100% pasando.
+- Tests añadidos a archivos pre-existentes: `test_brain_policy.py` (+2 para
+  guardrail wiring), `test_data_splitter.py` (+4 para `split_by_subject_3way`).
+- Total: **270 → 276 tests, 100% pasando**. (6 archivos nuevos con 58 tests +
+  6 tests añadidos a archivos existentes; el delta neto refleja también
+  refactors menores en otros tests.)
 
 ### Performance
 
