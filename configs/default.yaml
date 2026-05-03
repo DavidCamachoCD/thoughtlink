@@ -3,7 +3,11 @@
 data:
   dataset_id: "KernelCo/robot_control"
   cache_dir: "./data/raw"
-  test_size: 0.2  # fraction of subjects for test
+  test_size: 0.2  # fraction of subjects for test (legacy 2-way)
+  # 3-way split for calibration + conformal (with 17 subjects: 13/1/3)
+  split_3way:
+    calib_size: 0.0588   # 1/17
+    test_size: 0.1765    # 3/17
 
 preprocessing:
   eeg:
@@ -54,6 +58,23 @@ inference:
   debounce_count: 3
   smoother_window: 5
   prediction_hz: 2.0
+
+# Post-hoc confidence calibration (Platt 1999 / Zadrozny & Elkan 2002 / Guo et al. 2017).
+# Default sigmoid (Platt) since our calibration set is small (~1 subject =
+# ~700 windows) and Niculescu-Mizil & Caruana 2005 show isotonic only beats
+# sigmoid past ~1k calibration examples. CNN/temporal models use temperature
+# scaling regardless (Guo et al. 2017).
+calibration:
+  enabled: true
+  sklearn_method: "sigmoid"    # or "isotonic" (use only if calib > 1k samples)
+
+# Split-conformal prediction (Vovk 2005; Romano et al. 2020). Provides a
+# distribution-free coverage guarantee >= 1 - alpha. When the prediction set
+# has more than one class, BrainPolicy holds the previous action.
+conformal:
+  enabled: true
+  alpha: 0.1                   # 90% target coverage
+  score: "aps"                 # "aps" (Romano et al. 2020) or "naive"
 
 bridge:
   intent_to_action:

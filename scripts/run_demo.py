@@ -183,6 +183,12 @@ def main():
     parser.add_argument("--config", type=str, default="configs/default.yaml", help="Config path")
     parser.add_argument("--live", action="store_true", help="Print steps in real-time")
     parser.add_argument("--delay", type=float, default=0.0, help="Delay between steps (seconds), for live visualization")
+    parser.add_argument(
+        "--calibrated",
+        action="store_true",
+        help="Use the calibrated model + APS conformal predictor from results/. "
+             "Requires `python scripts/calibrate_models.py` to have been run.",
+    )
     args = parser.parse_args()
 
     print("=" * 60)
@@ -199,6 +205,25 @@ def main():
     with open(model_path, "rb") as f:
         model = pickle.load(f)
 
+    # Optionally load calibrated artifacts (calibrator + conformal predictor).
+    calibrator = None
+    conformal = None
+    if args.calibrated:
+        stem = "hierarchical" if "hierarchical" in model_path.name else "best_baseline"
+        cal_path = Path("results") / f"{stem}_calibrated.pkl"
+        cp_path = Path("results") / f"{stem}_conformal.pkl"
+        if not cal_path.exists() or not cp_path.exists():
+            raise FileNotFoundError(
+                f"--calibrated requires {cal_path} and {cp_path}. "
+                "Run `python scripts/calibrate_models.py` first."
+            )
+        with open(cal_path, "rb") as f:
+            calibrator = pickle.load(f)
+        with open(cp_path, "rb") as f:
+            conformal = pickle.load(f)
+        print(f"Calib:  {cal_path.name}")
+        print(f"Conf:   {cp_path.name}")
+
     # Find files
     npz_files = find_npz_files(args.files, args.data_dir, args.max_files)
     print(f"Files:  {len(npz_files)} .npz files")
@@ -213,7 +238,13 @@ def main():
         on_step = on_step_with_delay
 
     # Create policy
-    policy = BrainPolicy(model=model, config=config, on_step=on_step)
+    policy = BrainPolicy(
+        model=model,
+        config=config,
+        on_step=on_step,
+        calibrator=calibrator,
+        conformal=conformal,
+    )
 
     # Run demo
     print("\n" + "-" * 60)

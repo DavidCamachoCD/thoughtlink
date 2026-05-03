@@ -3,7 +3,11 @@
 import numpy as np
 import pytest
 
-from thoughtlink.data.splitter import split_by_subject, get_subject_folds
+from thoughtlink.data.splitter import (
+    get_subject_folds,
+    split_by_subject,
+    split_by_subject_3way,
+)
 
 
 def _make_samples(n_subjects: int = 10, samples_per_subject: int = 5) -> list[dict]:
@@ -51,6 +55,35 @@ class TestSplitBySubject:
         _, test1 = split_by_subject(samples, random_state=42)
         _, test2 = split_by_subject(samples, random_state=99)
         assert {s["subject_id"] for s in test1} != {s["subject_id"] for s in test2}
+
+
+class TestSplitBySubject3Way:
+    def test_disjoint_subjects(self):
+        samples = _make_samples(17, 5)
+        train, calib, test = split_by_subject_3way(samples)
+        train_s = {s["subject_id"] for s in train}
+        calib_s = {s["subject_id"] for s in calib}
+        test_s = {s["subject_id"] for s in test}
+        assert train_s.isdisjoint(calib_s)
+        assert train_s.isdisjoint(test_s)
+        assert calib_s.isdisjoint(test_s)
+
+    def test_all_samples_preserved(self):
+        samples = _make_samples(17, 5)
+        train, calib, test = split_by_subject_3way(samples)
+        assert len(train) + len(calib) + len(test) == len(samples)
+
+    def test_default_split_for_17_subjects_is_13_1_3(self):
+        samples = _make_samples(17, 5)
+        train, calib, test = split_by_subject_3way(samples)
+        assert len({s["subject_id"] for s in train}) == 13
+        assert len({s["subject_id"] for s in calib}) == 1
+        assert len({s["subject_id"] for s in test}) == 3
+
+    def test_invalid_proportions_rejected(self):
+        samples = _make_samples(17, 5)
+        with pytest.raises(ValueError):
+            split_by_subject_3way(samples, calib_size=0.5, test_size=0.6)
 
 
 class TestGetSubjectFolds:

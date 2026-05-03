@@ -84,6 +84,25 @@ thoughtlink/
 | Temporal GRU | PyTorch | `models/temporal.py` |
 | Voting Ensemble | sklearn | `models/ensemble.py` |
 
+## Guardrails (v1.1+)
+
+A SOTA post-hoc layer between models and the robot turns the
+`confidence_threshold = 0.6` from an empirical dial into a
+distribution-free statistical guarantee:
+
+- **Calibration** (Platt / isotonic / temperature scaling) so that
+  `predict_proba` reflects real frequencies. On the CNN, ECE drops from
+  0.66 to 0.020 (33×) with temperature scaling alone.
+- **Conformal prediction** (APS, weighted APS) with coverage ≥ 1−α
+  guaranteed. When the prediction set has more than one class, the
+  `BrainPolicy` holds the previous action — a hard safety guardrail.
+- **Factorial ablation harness** in `src/thoughtlink/eval/` evaluates
+  3 models × 4 calibrators × 4 conformal × 3 seeds = 96 cells with
+  versioned, resumable output.
+
+Full motivation, architecture and empirical results (96-cell ablation):
+**[`docs/research/guardrails.md`](docs/research/guardrails.md)**.
+
 ## Progress
 
 ### v0.1.0 - v0.3.0: Core pipeline

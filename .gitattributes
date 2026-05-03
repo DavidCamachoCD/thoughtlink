@@ -1,0 +1,3 @@
+# Exclude Jupyter notebooks from GitHub's language statistics.
+# Notebooks are exploratory artefacts; the package is Python.
+*.ipynb linguist-detectable=false

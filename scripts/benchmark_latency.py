@@ -79,6 +79,26 @@ def main():
     mean_ms, std_ms = benchmark(pipeline.process, probs, CLASS_NAMES, n_runs=n_runs)
     print(f"{'Stability Pipeline:':<35} {mean_ms:>8.2f} +/- {std_ms:.2f} ms")
 
+    # 4b. Optional calibration + conformal overhead.
+    cal_path = Path("results/best_baseline_calibrated.pkl")
+    cp_path = Path("results/best_baseline_conformal.pkl")
+    if cal_path.exists() and cp_path.exists() and model_path.exists():
+        with open(cal_path, "rb") as f:
+            calibrator = pickle.load(f)
+        with open(cp_path, "rb") as f:
+            conformal = pickle.load(f)
+
+        features = extract_window_features(window)
+        mean_ms, std_ms = benchmark(
+            calibrator.predict_proba, features.reshape(1, -1), n_runs=n_runs,
+        )
+        print(f"{'Calibrator (predict_proba):':<35} {mean_ms:>8.2f} +/- {std_ms:.2f} ms")
+
+        mean_ms, std_ms = benchmark(
+            conformal.predict_set, probs.reshape(1, -1), n_runs=n_runs,
+        )
+        print(f"{'Conformal predict_set:':<35} {mean_ms:>8.2f} +/- {std_ms:.2f} ms")
+
     # 5. End-to-end (feature extraction + model + stability)
     if model_path.exists():
         with open(model_path, "rb") as f:
