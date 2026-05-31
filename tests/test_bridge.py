@@ -302,7 +302,8 @@ class TestMuJoCoController:
         assert mock_instance.set_action.call_count == 4
 
     @patch("thoughtlink.bridge.mujoco_controller.Controller")
-    def test_execute_auto_starts(self, MockCtrl):
+    @patch("thoughtlink.bridge.mujoco_controller.Action")
+    def test_execute_auto_starts(self, MockAction, MockCtrl):
         from thoughtlink.bridge.mujoco_controller import MuJoCoController
 
         mock_instance = MockCtrl.return_value
@@ -336,7 +337,8 @@ class TestMuJoCoController:
         mock_instance.stop.assert_not_called()
 
     @patch("thoughtlink.bridge.mujoco_controller.Controller")
-    def test_works_with_orchestrator(self, MockCtrl):
+    @patch("thoughtlink.bridge.mujoco_controller.Action")
+    def test_works_with_orchestrator(self, MockAction, MockCtrl):
         """MuJoCoController works as a drop-in for Orchestrator."""
         from thoughtlink.bridge.mujoco_controller import MuJoCoController
 
