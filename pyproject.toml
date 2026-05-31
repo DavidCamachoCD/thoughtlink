@@ -43,3 +43,17 @@ packages = ["src/thoughtlink"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
+
+# PyTorch CUDA 12.8 wheels are multi-architecture fat binaries (SASS for
+# Ampere/Ada/Hopper/Blackwell + PTX for forward-compat), so a single torch
+# build runs on RTX 30xx/40xx/50xx and datacenter GPUs as long as the host
+# driver is recent enough. Required for Blackwell (RTX 50-series, sm_120),
+# which the default PyPI / cu124 wheels do not cover. Linux-only marker so
+# macOS contributors still get the standard PyPI build (no CUDA on macOS).
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cu128", marker = "sys_platform == 'linux'" }]

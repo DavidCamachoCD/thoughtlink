@@ -37,6 +37,8 @@ x-volumes: &volumes
 x-env: &env
   environment:
     - NVIDIA_VISIBLE_DEVICES=${NVIDIA_VISIBLE_DEVICES:-all}
+    # compute,utility = CUDA; graphics = EGL rendering for MuJoCo headless
+    - NVIDIA_DRIVER_CAPABILITIES=${NVIDIA_DRIVER_CAPABILITIES:-compute,utility,graphics}
     - CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-0}
     - MUJOCO_GL=egl
     - HF_TOKEN=${HF_TOKEN:-}
