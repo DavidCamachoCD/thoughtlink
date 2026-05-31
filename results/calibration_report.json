@@ -1,0 +1,114 @@
+{
+  "split": {
+    "calib_size": 2700,
+    "test_size": 2025,
+    "n_classes": 5
+  },
+  "calibration_method": "sigmoid",
+  "conformal_alpha": 0.1,
+  "models": {
+    "best_baseline": {
+      "pre": {
+        "name": "best_baseline_pre",
+        "ece": 0.035250349480655196,
+        "mce": 0.6948960587811932,
+        "brier": 0.7746038172223966
+      },
+      "post": {
+        "name": "best_baseline_post",
+        "ece": 0.23618331489769917,
+        "mce": 0.5390242845635309,
+        "brier": 0.8789512806734939
+      },
+      "conformal": {
+        "alpha": 0.1,
+        "q_hat": 0.9648696503246054,
+        "empirical_coverage": 0.7071604938271605,
+        "avg_set_size": 2.942222222222222,
+        "weighted": {
+          "q_hat": 0.9265766674591065,
+          "empirical_coverage": 0.5901234567901235,
+          "avg_set_size": 2.419753086419753,
+          "weight_stats": {
+            "n": 2700,
+            "sum": 649.848429721079,
+            "min": 0.02,
+            "max": 50.0,
+            "median": 0.022494381234716462,
+            "effective_sample_size": 45.72202698667019,
+            "ess_ratio": 0.016934084069137108
+          }
+        }
+      }
+    },
+    "hierarchical": {
+      "pre": {
+        "name": "hierarchical_pre",
+        "ece": 0.11446828926164579,
+        "mce": 0.8961153495053215,
+        "brier": 0.8220217889554585
+      },
+      "post": {
+        "name": "hierarchical_post",
+        "ece": 0.2853167537518054,
+        "mce": 0.6358639777150434,
+        "brier": 0.9341921290545694
+      },
+      "conformal": {
+        "alpha": 0.1,
+        "q_hat": 0.9564297432531101,
+        "empirical_coverage": 0.6928395061728395,
+        "avg_set_size": 3.0469135802469136,
+        "weighted": {
+          "q_hat": 0.9999999999999999,
+          "empirical_coverage": 0.8879012345679013,
+          "avg_set_size": 4.244938271604938,
+          "weight_stats": {
+            "n": 2700,
+            "sum": 649.848429721079,
+            "min": 0.02,
+            "max": 50.0,
+            "median": 0.022494381234716462,
+            "effective_sample_size": 45.72202698667019,
+            "ess_ratio": 0.016934084069137108
+          }
+        }
+      }
+    },
+    "cnn": {
+      "temperature": 2692.2595707073947,
+      "pre": {
+        "name": "cnn_pre",
+        "ece": 0.7176238668700796,
+        "mce": 0.786914348959209,
+        "brier": 1.4813653230667114
+      },
+      "post": {
+        "name": "cnn_post",
+        "ece": 0.028498047641765913,
+        "mce": 0.8927968144416809,
+        "brier": 0.8063034415245056
+      },
+      "conformal": {
+        "alpha": 0.1,
+        "q_hat": 1.0,
+        "empirical_coverage": 0.9787654320987654,
+        "avg_set_size": 4.9120987654320984,
+        "weighted": {
+          "q_hat": 1.0,
+          "empirical_coverage": 0.9787654320987654,
+          "avg_set_size": 4.9120987654320984,
+          "weight_stats": {
+            "n": 2700,
+            "sum": 649.848429721079,
+            "min": 0.02,
+            "max": 50.0,
+            "median": 0.022494381234716462,
+            "effective_sample_size": 45.72202698667019,
+            "ess_ratio": 0.016934084069137108
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "models": [
+    "baseline",
+    "hierarchical",
+    "cnn"
+  ],
+  "calibrators": [
+    "raw",
+    "isotonic",
+    "sigmoid",
+    "temperature"
+  ],
+  "conformals": [
+    "none",
+    "aps",
+    "naive",
+    "weighted_aps"
+  ],
+  "seeds": [
+    42,
+    123,
+    456
+  ],
+  "alpha": 0.1,
+  "n_calib_subjects": 2,
+  "n_test_subjects": 3,
+  "train_config": {
+    "seed": 42,
+    "n_epochs": 100,
+    "patience": 15,
+    "batch_size": 64,
+    "lr": 0.001,
+    "weight_decay": 0.0001,
+    "use_alignment": true,
+    "cnn_f1": 16,
+    "cnn_f2": 32,
+    "cnn_d": 2,
+    "cnn_dropout": 0.3,
+    "baseline_model": "random_forest"
+  },
+  "git_sha": "b238320",
+  "timestamp": "2026-05-03T00:56:46",
+  "python": "3.12.11",
+  "platform": "macOS-26.3.1-arm64-arm-64bit"
+}

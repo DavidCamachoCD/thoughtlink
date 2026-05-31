@@ -1,0 +1,37 @@
+{
+  "feature_set": "band_power + hjorth + time_domain + wavelet_dwt",
+  "n_features": 138,
+  "dataset": {
+    "train_windows": 12150,
+    "test_windows": 1350
+  },
+  "models": {
+    "logreg": {
+      "accuracy": 0.17333333333333334,
+      "kappa": -0.03333333333333344,
+      "f1_macro": 0.15989241104868313
+    },
+    "svm_linear": {
+      "accuracy": 0.2074074074074074,
+      "kappa": 0.0092592592592593,
+      "f1_macro": 0.19245535383637624
+    },
+    "svm_rbf": {
+      "accuracy": 0.21777777777777776,
+      "kappa": 0.022222222222222254,
+      "f1_macro": 0.18480997557427098
+    },
+    "random_forest": {
+      "accuracy": 0.24296296296296296,
+      "kappa": 0.0537037037037037,
+      "f1_macro": 0.23243448512697448
+    },
+    "hierarchical": {
+      "accuracy": 0.20074074074074075,
+      "kappa": 0.0009259259259258856,
+      "f1_macro": 0.16075588063020987
+    }
+  },
+  "hierarchical_stage1_acc": 0.7911111111111111,
+  "false_trigger_rate": 0.3925925925925926
+}

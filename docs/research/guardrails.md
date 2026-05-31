@@ -352,17 +352,14 @@ Run referencia: `results/ablations/20260503-005644-b238320/`. 96 cells, 0 errore
 ### Tabla principal: ECE pre-vs-post calibración
 
 Accuracy y ECE no dependen del conformal (la calibración cambia las probas, no
-las decisiones), así que se reportan agregadas sobre conformal:
+las decisiones), así que se reportan agregadas sobre conformal. **Headline**:
+mejor calibrador por modelo + el "antes" del CNN como referencia.
 
 | Modelo | Calibración | Accuracy | ECE | Brier |
 |---|---|---:|---:|---:|
-| baseline | raw | 0.248 ± 0.037 | 0.058 ± 0.016 | 0.797 ± 0.018 |
-| baseline | sigmoid | 0.239 ± 0.022 | **0.039 ± 0.005** | 0.796 ± 0.004 |
-| baseline | isotonic | 0.234 ± 0.022 | 0.042 ± 0.022 | 0.799 ± 0.010 |
-| hierarchical | raw | 0.242 ± 0.044 | 0.119 ± 0.043 | 0.826 ± 0.026 |
-| hierarchical | sigmoid | 0.245 ± 0.046 | 0.079 ± 0.066 | 0.810 ± 0.027 |
-| hierarchical | isotonic | 0.241 ± 0.026 | **0.071 ± 0.061** | 0.807 ± 0.017 |
-| **cnn** | **raw** | 0.214 ± 0.017 | **0.658 ± 0.084** | 1.402 ± 0.114 |
+| baseline | sigmoid (best) | 0.239 ± 0.022 | **0.039 ± 0.005** | 0.796 ± 0.004 |
+| hierarchical | isotonic (best) | 0.241 ± 0.026 | **0.071 ± 0.061** | 0.807 ± 0.017 |
+| cnn | raw (before) | 0.214 ± 0.017 | 0.658 ± 0.084 | 1.402 ± 0.114 |
 | **cnn** | **temperature** | 0.214 ± 0.017 | **0.020 ± 0.012** | 0.801 ± 0.001 |
 
 **Hallazgo headline**: temperature scaling sobre el CNN reduce ECE de **0.66 a 0.02
@@ -370,20 +367,23 @@ las decisiones), así que se reportan agregadas sobre conformal:
 preservado). Brier baja a la mitad porque dejamos de penalizar confianzas
 extremas con clase incorrecta.
 
+> Matriz completa (todas las combinaciones modelo × calibrador, mean ± std
+> across seeds): [`docs/results.md` § Factorial ablation](../results.md#factorial-ablation-mean--std-across-seeds).
+> Datos canónicos: `results/ablations/<latest>/summary.csv`.
+
 ### Tabla de cobertura conformal por (modelo, calibración, conformal)
 
-Target ≥ 0.90 (α = 0.1):
+Target ≥ 0.90 (α = 0.1). **Headline**: APS cumple el target en los tres modelos;
+weighted_aps es condicional (ver hallazgo 4 abajo).
 
-| Modelo | Calibración | none | aps | naive | weighted_aps |
-|---|---|:---:|:---:|:---:|:---:|
-| baseline | raw | — | 0.93 | 0.92 | 0.89 |
-| baseline | sigmoid | — | **0.95** | 0.86 | 0.91 |
-| baseline | isotonic | — | 0.90 | 0.87 | 0.99 |
-| hierarchical | raw | — | 0.95 | 0.87 | 0.77 |
-| hierarchical | sigmoid | — | **0.96** | 0.84 | 0.83 |
-| hierarchical | isotonic | — | 0.95 | 0.84 | 0.93 |
-| cnn | raw | — | 0.98 | 1.00 | 0.98 |
-| cnn | temperature | — | **0.99** | 0.82 | 0.74 |
+| Modelo | Calibración | aps | naive | weighted_aps |
+|---|---|:---:|:---:|:---:|
+| baseline | sigmoid | **0.95** | 0.86 | 0.91 |
+| hierarchical | sigmoid | **0.96** | 0.84 | 0.83 |
+| cnn | temperature | **0.99** | 0.82 | 0.74 |
+
+> Tabla completa (8 combinaciones modelo × calibración × 3 conformal):
+> [`docs/results.md` § Factorial ablation](../results.md#factorial-ablation-mean--std-across-seeds).
 
 ### Tabla de set size promedio (decisividad)
 
@@ -400,6 +400,9 @@ Sets enormes (3.7–5.0 de 5) son **el comportamiento correcto** dado que la
 accuracy real de los modelos cross-subject es ~24%. La capa honestamente admite
 que no sabe → robot mantiene STOP. Es exactamente la garantía de seguridad que
 buscamos.
+
+> Set sizes para todas las combinaciones (incluyendo `raw` y `isotonic`):
+> [`docs/results.md` § Factorial ablation](../results.md#factorial-ablation-mean--std-across-seeds).
 
 ### Hallazgos cualitativos
 
